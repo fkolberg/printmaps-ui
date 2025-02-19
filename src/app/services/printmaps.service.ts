@@ -67,6 +67,12 @@ export class PrintmapsService {
         let parser = new DOMParser();
         let styleXml = parser.parseFromString(userObject.Style, "application/xml");
         let wkt = parse(userObject.WellKnownText);
+        let c_x = 0;
+        let c_y = 0;
+        if (wkt && 'coordinates' in wkt) {
+            let c_x = wkt.coordinates[0];
+            let c_y = wkt.coordinates[1];
+        }
         let textSymbolizerAttributes = styleXml.getElementsByTagName("TextSymbolizer")[0].attributes;
         return {
             type: metadata.Type as AdditionalElementType,
@@ -88,17 +94,23 @@ export class PrintmapsService {
                         DEFAULT_TEXT_STYLE.fontColor.opacity.toString())
                 }
             },
-            location: {x: wkt.coordinates[0], y: wkt.coordinates[1]}
+            location: {x: c_x, y: c_y}
         };
     }
 
     private static extractScaleElement(userObject: UserObject, metadata: UserObjectMetadata): AdditionalScaleElement {
         let wkt = parse(userObject.WellKnownText);
+        let c_x = 0;
+        let c_y = 0;
+        if (wkt && 'coordinates' in wkt) {
+            let c_x = wkt.coordinates[0];
+            let c_y = wkt.coordinates[1];
+        }
         return {
             type: metadata.Type as AdditionalElementType,
             id: metadata.ID ?? uuid(),
             style: DEFAULT_SCALE_STYLE,
-            location: {x: wkt.coordinates[0], y: wkt.coordinates[1]}
+            location: {x: c_x, y: c_y}
         };
     }
 
@@ -106,6 +118,7 @@ export class PrintmapsService {
         let parser = new DOMParser();
         let styleXml = parser.parseFromString(userObject.Style, "application/xml");
         let lineSymbolizerAttributes = styleXml.getElementsByTagName("LineSymbolizer")[0].attributes;
+        
         return {
             type: AdditionalElementType.GPX_TRACK,
             id: metadata.ID ?? uuid(),
@@ -131,11 +144,22 @@ export class PrintmapsService {
         let metadata = JSON.parse(userObject.Style.match(/^<!--(.*)-->/)[1]) as UserObjectMetadata;
         if (metadata?.Type == "margins") {
             let wkt = parse(userObject.WellKnownText);
+            let c_top = 0;
+            let c_bottom = 0;
+            let c_left = 0;
+            let c_right = 0;
+
+            if (wkt && 'coordinates' in wkt) {
+                let c_top = wkt.coordinates[0][2][1] - wkt.coordinates[1][2][1];
+                let c_bottom = wkt.coordinates[1][0][1];
+                let c_left = wkt.coordinates[1][0][0];
+                let c_right = wkt.coordinates[0][2][0] - wkt.coordinates[1][2][0];
+            }
             return {
-                top: wkt.coordinates[0][2][1] - wkt.coordinates[1][2][1],
-                bottom: wkt.coordinates[1][0][1],
-                left: wkt.coordinates[1][0][0],
-                right: wkt.coordinates[0][2][0] - wkt.coordinates[1][2][0]
+                top: c_top,
+                bottom: c_bottom,
+                left: c_left,
+                right: c_right
             };
         }
         return undefined;

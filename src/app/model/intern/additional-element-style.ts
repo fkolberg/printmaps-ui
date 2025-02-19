@@ -67,7 +67,8 @@ function convertAdditionalTrackElementToSymbolizer(_templateService: TemplateSer
         Type: element.type,
         File: element.file?.name
     };
-    return `<!--${JSON.stringify(metadata)}--><LineSymbolizer stroke='${element.style.lineColor.rgbHexValue}' stroke-width='${element.style.lineWidth}' stroke-opacity='${element.style.lineColor.opacity}' stroke-linecap='round' stroke-linejoin='round' smooth='1' />`;
+    //return `<!--${JSON.stringify(metadata)}--><LineSymbolizer stroke='${element.style.lineColor.rgbHexValue}' stroke-width='${element.style.lineWidth}' stroke-opacity='${element.style.lineColor.opacity}' stroke-linecap='round' stroke-linejoin='round' smooth='1' />`;
+    return `<!--${JSON.stringify(metadata)}--><LineSymbolizer stroke='${element.style.lineColor.rgbHexValue}' stroke-width='${element.style.lineWidth}' stroke-opacity='${element.style.lineColor.opacity}' stroke-linecap='round' stroke-linejoin='round' smooth='0' />`;
 }
 
 function convertAdditionalScaleElementToSymbolizer(_templateService: TemplateService, _mapProject: MapProject, element: AdditionalScaleElement): string {
