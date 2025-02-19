@@ -19,6 +19,10 @@
                     <mat-label i18n>Line Color</mat-label>
                     <color-selector formControlName="lineColor"></color-selector>
                 </mat-form-field>
+                <mat-form-field [hideRequiredMarker]="true" appearance="none" fxFlex="0 1 100px">
+                    <mat-label i18n>Smooth</mat-label>
+                    <input matInput type="number" formControlName="smooth" min="0" max="1" step="0.01">
+                </mat-form-field>  
             </div>
         </div>
     </div>

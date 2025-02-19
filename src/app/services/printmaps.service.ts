@@ -131,7 +131,9 @@ export class PrintmapsService {
                         ?? DEFAULT_TRACK_STYLE.lineColor.rgbHexValue,
                     opacity: parseFloat(lineSymbolizerAttributes.getNamedItem("stroke-opacity")?.value
                         ?? DEFAULT_TRACK_STYLE.lineColor.opacity.toString())
-                }
+                },
+                smooth: parseFloat(lineSymbolizerAttributes.getNamedItem("smooth")?.value
+                    ?? DEFAULT_TRACK_STYLE.smooth.toString()) 
             },
             file: {name: metadata.File, data: undefined, modified: new Date().getTime()}
         };

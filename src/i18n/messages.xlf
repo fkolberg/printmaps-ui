@@ -58,6 +58,14 @@
           <context context-type="linenumber">19</context>
         </context-group>
       </trans-unit>
+      <trans-unit datatype="html" approved="yes" id="4272334652167271438">
+        <source>Smooth</source>
+        <target state="signed-off" phase-name="approval-1">Smooth</target>
+          <context-group purpose="location">
+              <context context-type="sourcefile">src/app/components/additional-gpx-element-detail/additional-gpx-element-detail.component.html</context>
+              <context context-type="linenumber">23</context>
+          </context-group>
+      </trans-unit>
       <trans-unit id="4267980179189609192" datatype="html">
         <source>No file selected</source>
         <context-group purpose="location">

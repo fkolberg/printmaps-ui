@@ -43,7 +43,8 @@ export class AdditionalGpxElementDetailComponent implements ControlValueAccessor
                 lineColor: [{
                     rgbHexValue: "#0000ff",
                     opacity: 0.4
-                } as Color]
+                } as Color],
+                smooth: 0
             })
         });
 

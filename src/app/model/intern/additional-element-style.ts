@@ -24,6 +24,7 @@ export interface AdditionalElementTextStyle extends AdditionalElementStyle {
 export interface AdditionalElementTrackStyle extends AdditionalElementStyle {
     lineWidth: number;
     lineColor: Color;
+    smooth : number; 
 }
 
 export enum AdditionalElementStyleType {
@@ -68,7 +69,21 @@ function convertAdditionalTrackElementToSymbolizer(_templateService: TemplateSer
         File: element.file?.name
     };
     //return `<!--${JSON.stringify(metadata)}--><LineSymbolizer stroke='${element.style.lineColor.rgbHexValue}' stroke-width='${element.style.lineWidth}' stroke-opacity='${element.style.lineColor.opacity}' stroke-linecap='round' stroke-linejoin='round' smooth='1' />`;
-    return `<!--${JSON.stringify(metadata)}--><LineSymbolizer stroke='${element.style.lineColor.rgbHexValue}' stroke-width='${element.style.lineWidth}' stroke-opacity='${element.style.lineColor.opacity}' stroke-linecap='round' stroke-linejoin='round' smooth='0' />`;
+    
+    // Ensure smooth is between 0 and 1, no need to convert it to a percentage
+    let smoothValue = typeof element.style.smooth === 'number' ? element.style.smooth : 0;
+
+    // Clamp the value between 0 and 1
+    smoothValue = Math.min(1, Math.max(0, smoothValue));
+
+    // Format the value to 2 decimal places
+    const smoothFormatted = smoothValue.toFixed(2);
+
+    let result = `<!--${JSON.stringify(metadata)}--><LineSymbolizer stroke='${element.style.lineColor.rgbHexValue}' stroke-width='${element.style.lineWidth}' stroke-opacity='${element.style.lineColor.opacity}' stroke-linecap='round' stroke-linejoin='round' smooth='${smoothValue}' />`;
+    
+    //console.log("Generated Symbolizer String:", result);
+
+    return result;
 }
 
 function convertAdditionalScaleElementToSymbolizer(_templateService: TemplateService, _mapProject: MapProject, element: AdditionalScaleElement): string {
@@ -113,5 +128,6 @@ export const DEFAULT_TRACK_STYLE: AdditionalElementTrackStyle = {
     lineColor: {
         rgbHexValue: "#0000ff",
         opacity: 0.4
-    }
+    },
+    smooth: 0 
 };
