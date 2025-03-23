@@ -135,7 +135,7 @@ export class PrintmapsService {
                 smooth: parseFloat(lineSymbolizerAttributes.getNamedItem("smooth")?.value
                     ?? DEFAULT_TRACK_STYLE.smooth.toString()) 
             },
-            file: {name: metadata.File, data: undefined, modified: new Date().getTime()}
+            file: {name: metadata.File, data: undefined, modified: new Date().getTime()}            
         };
     }
 
@@ -168,6 +168,8 @@ export class PrintmapsService {
     }
 
     loadMapProjectState(id: string): Observable<MapProjectState> {
+        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz printmaps.service.ts loadMapProjectState`);
+
         let endpointUrl = `${this.baseUrl}/mapstate/${id}`;
         return this.http.get<MapRenderingJobState>(endpointUrl)
             .pipe(
@@ -180,21 +182,37 @@ export class PrintmapsService {
                 })
             );
     }
-
+    
     loadMapProject(mapProjectReference: MapProjectReference): Observable<MapProject> {
+        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz printmaps.service.ts loadMapProject`);
+
         let endpointUrl = `${this.baseUrl}/metadata/${mapProjectReference.id}`;
         return this.http.get<MapRenderingJobDefinition>(endpointUrl)
             .pipe(
+                tap(mapRenderingJob => console.log('mapRenderingJob: ' + mapRenderingJob)),  // Use tap to log the mapRenderingJob
                 map(mapRenderingJob => this.fromMapRenderingJob(mapProjectReference.name, mapRenderingJob)),
                 concatMap(mapProject =>
                     this.loadMapProjectState(mapProject.id)
                         .pipe(
+                            tap(mapProjectState => console.log('mapProjectState: ' + mapProjectState)),  // Use tap to log the mapRenderingJob
                             map(mapProjectState => {
                                 mapProject.state = mapProjectState;
                                 return mapProject;
                             })
                         )
                 ),
+                /*
+                concatMap(mapProject =>
+                    this.loadMapProjectData(mapProject.id)
+                        .pipe(
+                            tap(mapProjectState => console.log('loadMapProjectData: ' + mapProjectState)),  // Use tap to log the mapRenderingJob
+                            map(mapProjectState => {
+                                mapProject.state = mapProjectState;
+                                return mapProject;
+                            })
+                        )
+                ),
+                */
                 catchError(() => EMPTY)
             );
     }
@@ -217,8 +235,10 @@ export class PrintmapsService {
             );
 
     }
-
+  
     createOrUpdateMapRenderingJob(mapProject: MapProject): Observable<MapProject> {
+        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz createOrUpdateMapRenderingJob`);
+        
         let endpointUrl = `${this.baseUrl}/metadata${mapProject.id ? "/patch" : ""}`;
         return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.toMapRenderingJob(mapProject), REQUEST_OPTIONS)
             .pipe(
@@ -241,9 +261,23 @@ export class PrintmapsService {
     }
 
     uploadUserFile(mapProjectId: string, content: string | Blob, name: string): Observable<boolean> {
+        
+        // Create a Blob from the content
+        const blob = new Blob([content], { type: 'text/plain' });
+
+        // Read the Blob content as text and log it
+        blob.text().then(text => {
+        console.log(`************************************************************************`);
+        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz uploadUserFile: ${text}`);
+        console.log(`************************************************************************`);
+        }).catch(err => {
+        console.error('Error reading the Blob content', err);
+        });
+
         let formData = new FormData();
         formData.append("file", new Blob([content], {type: "image/svg+xml"}), name);
         let endpointUrl = `${this.baseUrl}/upload/${mapProjectId}`;
+        
         let requestOptions = {
             headers: new HttpHeaders({
                 "Accept": "application/vnd.api+json; charset=utf-8"
@@ -339,6 +373,7 @@ export class PrintmapsService {
     }
 
     private toUserFiles(mapProject: MapProject): UserFile[] {
+        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz toUserFiles `);
         let reductionFactor = SCALES.get(mapProject.scale).reductionFactor;
         let scaleRatio = Math.pow(10, Math.ceil(Math.log10(10 * reductionFactor))) / reductionFactor;
         let unitLengthInM;

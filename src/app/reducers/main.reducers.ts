@@ -199,7 +199,7 @@ const reducer = createReducer(initialState,
             ...state,
             selectedAdditionalElementId: id
         })),
-
+    /*    
     on(UiActions.removeAdditionalElement,
         (state, {id}) => ({
             ...state,
@@ -212,6 +212,31 @@ const reducer = createReducer(initialState,
                 : state.currentMapProject,
             selectedAdditionalElementId: undefined
         })),
+    */
+        on(UiActions.removeAdditionalElement,
+            (state, {id}) => {
+                // Log the state before the update
+                console.log('zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz main.reducer.ts Before update:', state);
+                
+                const updatedState = {
+                    ...state,
+                    currentMapProject: state.currentMapProject
+                        ? {
+                            ...state.currentMapProject,
+                            modifiedLocally: true,
+                            additionalElements: state.currentMapProject.additionalElements.filter(element => element.id != id)
+                        }
+                        : state.currentMapProject,
+                    selectedAdditionalElementId: undefined
+                };
+                
+                // Log the updated state
+                console.log('zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz main.reducer.ts After update:', state);
+                                
+                return updatedState;
+            }
+        ),
+        
 
     on(UiActions.updateAdditionalElement,
         (state, {element}) => ({

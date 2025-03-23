@@ -195,6 +195,8 @@ export class CurrentMapProjectPaneComponent {
     }
 
     removeAdditionalElement() {
+        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz createOrUpdateMapRenderingJob`);
+        
         if (this.mapProject.additionalElements.find(element => element.id == this.selectedAdditionalElementId)?.type == AdditionalElementType.ATTRIBUTION) {
             this.dialog.open(RemoveAttributionConfirmDialog, {disableClose: true})
                 .afterClosed()

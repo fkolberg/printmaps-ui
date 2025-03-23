@@ -24,6 +24,10 @@ import {ConfigurationService} from "../../services/configuration.service";
 import {gpx} from "@mapbox/leaflet-omnivore";
 import {AdditionalGpxElement} from "../../model/intern/additional-element";
 
+import { LoggingService } from './../../services/logging.service';
+import { JsonStorageService } from './../../services/json-storage.service';
+import { GpxDataMap } from './../../services/gpx-data-map.service';
+
 @Component({
     selector: "app-map",
     template: "<div id=\"map\"></div>",
@@ -55,7 +59,9 @@ export class MapComponent implements AfterViewInit {
     @Input() scale: Scale;
     @Subjectize("scale") scale$ = new ReplaySubject<Scale>(1);
 
-    constructor(private readonly configurationService: ConfigurationService, private store: Store<any>) {
+    constructor(private readonly configurationService: ConfigurationService, private store: Store<any>,
+        private loggingService: LoggingService,
+        private jsonStorageService: JsonStorageService) {
         this.bindToStore();
     }
 
@@ -70,9 +76,44 @@ export class MapComponent implements AfterViewInit {
         ).addTo(mapHandler);
     }
 
+    private static addTestLayer(mapHandler: L.Map) {
+        L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+                attribution:
+                    "Test"
+            }
+        ).addTo(mapHandler);
+    }
+
     ngAfterViewInit(): void {
         let mapHandler = L.map("map", {zoom: 12});
         MapComponent.addOsmLayer(mapHandler);
+
+        // ***********************************************
+        if(false) {
+            //MapComponent.addTestLayer(mapHandler);
+
+
+
+            GpxDataMap.initialize(); // Make sure this is called once to set the initial GPX data
+            // Retrieve the GPX XML data for 'Sperrung' and 'Sperrung2'
+            let gpx1Xml = GpxDataMap.getGpxData('gpx1');
+            let gpx2Xml = GpxDataMap.getGpxData('gpx2');
+
+            console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz ngAfterViewInit` + ' gpx1Xml ' + gpx1Xml);
+
+            let gpx1TrackHandler = gpx.parse(gpx1Xml);
+            gpx1TrackHandler.addTo(mapHandler); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+            let gpx2TrackHandler = gpx.parse(gpx2Xml);
+            gpx2TrackHandler.addTo(mapHandler); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        }
+        // ***********************************************
+    
+
+       
+        
 
         let areaSelectHandler;
         let areaSelectHandlerSubscriptions = [];
@@ -100,7 +141,10 @@ export class MapComponent implements AfterViewInit {
     }
 
     private bindToStore() {
-        // TODO: refactor direct binding to store to make map component reusable
+        // TODO: refactor direct binding to store to make map component reusable 
+        
+        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz map.component.ts bindToStore`);
+        
         this.store
             .select(currentMapProject)
             .pipe(
@@ -108,6 +152,8 @@ export class MapComponent implements AfterViewInit {
                     isEqual(previousValue, nextValue))
             )
             .subscribe(nextCurrentMapProject => {
+                console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz map.components this.store.select(currentMapProject)`);
+                
                 if (nextCurrentMapProject) {
                     this.centerCoordinates = L.latLng(nextCurrentMapProject.center.latitude, nextCurrentMapProject.center.longitude);
                     let factor = getScaleProperties(nextCurrentMapProject.scale).reductionFactor / 1000;
@@ -133,6 +179,8 @@ export class MapComponent implements AfterViewInit {
                 }
             });
         this.store.select(currentAdditionalGpxElements).subscribe(additionalGpxElements => {
+            console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz map.components this.store.select(currentAdditionalGpxElements)`);
+
             this.updateGpxTracks(additionalGpxElements);
         });
         this.centerCoordinatesChange
@@ -166,10 +214,18 @@ export class MapComponent implements AfterViewInit {
             ));
     }
 
-    private updateGpxTracks(additionalGpxElements: AdditionalGpxElement[]) {
+    private updateGpxTracks_orig(additionalGpxElements: AdditionalGpxElement[]) {
+      
         let gpxElementIdsToRemove = new Set<string>(this.gpxTrackHandlerByElementId.keys());
+        
         additionalGpxElements.forEach(additionalGpxElement => {
+        
+            console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks` + ' additionalGpxElement.id ' +additionalGpxElement.id);
+            console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks` + ' additionalGpxElement.file?.name ' +additionalGpxElement.file?.name);
+      
             if (additionalGpxElement.file?.data) {
+                this.jsonStorageService.storeJsonData(additionalGpxElement.file?.name, additionalGpxElement.file?.data); 
+                
                 gpxElementIdsToRemove.delete(additionalGpxElement.id);
                 let style = {
                     weight: additionalGpxElement.style.lineWidth,
@@ -180,17 +236,19 @@ export class MapComponent implements AfterViewInit {
                 let lastUpdate = this.gpxTrackLastUpdateByElementId.get(additionalGpxElement.id) ?? new Date().getTime();
                 let modified = additionalGpxElement.file.modified > lastUpdate;
                 if (currentGpxTrackHandler && modified) {
-                    currentGpxTrackHandler.remove();
+                     currentGpxTrackHandler.remove();
                 }
                 if (!currentGpxTrackHandler || modified) {
                     let gpxTrackHandler = gpx.parse(additionalGpxElement.file.data);
                     gpxTrackHandler.setStyle(() => style);
-                    gpxTrackHandler.addTo(this.mapHandler);
+                    gpxTrackHandler.addTo(this.mapHandler); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     this.gpxTrackHandlerByElementId.set(additionalGpxElement.id, gpxTrackHandler);
                     this.gpxTrackLastUpdateByElementId.set(additionalGpxElement.id, additionalGpxElement.file.modified);
                 } else {
                     currentGpxTrackHandler.setStyle(() => style);
                 }
+            } else {
+                console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks else`);
             }
         });
         gpxElementIdsToRemove.forEach(id => {
@@ -202,6 +260,76 @@ export class MapComponent implements AfterViewInit {
         });
     }
 
+    private updateGpxTracks(additionalGpxElements: AdditionalGpxElement[]) {
+      
+        let gpxElementIdsToRemove = new Set<string>(this.gpxTrackHandlerByElementId.keys());
+
+        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks` + ' top gpxElementIdsToRemove: ' + [...gpxElementIdsToRemove]);
+               
+        additionalGpxElements.forEach(additionalGpxElement => {
+        
+            console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks` + ' additionalGpxElement.id ' +additionalGpxElement.id);
+            console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks` + ' additionalGpxElement.file?.name ' +additionalGpxElement.file?.name);
+    
+            // Hack !!!
+            /*
+            if (additionalGpxElement.file?.name) {
+                if (additionalGpxElement.file.data) {
+                    console.log('additionalGpxElement.file.data:', additionalGpxElement.file.data);
+                } else {
+                    this.jsonStorageService.getJsonData(additionalGpxElement.file.name);
+                    console.log('Updated data:', additionalGpxElement.file.data);
+                }
+            } else {
+                console.log('No file name found for the GPX element.');
+            } 
+            */
+
+            if (additionalGpxElement.file?.data) {
+                this.jsonStorageService.storeJsonData(additionalGpxElement.file?.name, additionalGpxElement.file?.data); 
+                
+                gpxElementIdsToRemove.delete(additionalGpxElement.id);
+                let style = {
+                    weight: additionalGpxElement.style.lineWidth,
+                    color: additionalGpxElement.style.lineColor.rgbHexValue,
+                    opacity: additionalGpxElement.style.lineColor.opacity
+                };
+                let currentGpxTrackHandler = this.gpxTrackHandlerByElementId.get(additionalGpxElement.id);
+                let lastUpdate = this.gpxTrackLastUpdateByElementId.get(additionalGpxElement.id) ?? new Date().getTime();
+                let modified = additionalGpxElement.file.modified > lastUpdate;
+                if (currentGpxTrackHandler && modified) {
+                     //currentGpxTrackHandler.remove();
+                }
+                if (!currentGpxTrackHandler || modified) {
+                    let gpxTrackHandler = gpx.parse(additionalGpxElement.file.data);
+                    gpxTrackHandler.setStyle(() => style);
+                    gpxTrackHandler.addTo(this.mapHandler); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                    GpxDataMap.addGpxData(gpxTrackHandler, additionalGpxElement.file?.data); 
+
+                    this.gpxTrackHandlerByElementId.set(additionalGpxElement.id, gpxTrackHandler); // !!!!!!!!!!!!!!!!!!!!!
+                    this.gpxTrackLastUpdateByElementId.set(additionalGpxElement.id, additionalGpxElement.file.modified);
+                } else {
+                    currentGpxTrackHandler.setStyle(() => style);
+                }
+            } else {
+                console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks else`);
+            }
+        });
+
+        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks` + ' buttom gpxElementIdsToRemove: ' + [...gpxElementIdsToRemove]);
+        gpxElementIdsToRemove.forEach(id => {
+            let gpxHandler = this.gpxTrackHandlerByElementId.get(id);
+            if (gpxHandler) {
+        
+                console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks remove id: ` + id);
+        
+                //gpxHandler.remove();
+            }
+            //this.gpxTrackHandlerByElementId.delete(id);
+        });
+    }
+
     private handleCenterCoordinatesUpdate(mapHandler: L.Map) {
         let endSyncModelToMap = new Subject();
         let startSyncModelToMap = new Subject();
@@ -210,6 +338,9 @@ export class MapComponent implements AfterViewInit {
     }
 
     private syncModelToMap(mapHandler: L.Map, startSyncModelToMap: Subject<any>, endSyncModelToMap: Subject<any>) {
+        
+        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz map.component.ts syncModelToMap`);
+
         startSyncModelToMap
             .pipe(switchMap(() => this.centerCoordinates$
                     .pipe(
@@ -226,6 +357,9 @@ export class MapComponent implements AfterViewInit {
     }
 
     private syncMapToModel(mapHandler: L.Map, startSyncModelToMap: Subject<any>, endSyncModelToMap: Subject<any>) {
+
+        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz map.component.ts syncMapToModel`);
+        
         fromEvent(mapHandler, "movestart")
             .pipe(
                 tap(() => endSyncModelToMap.next()),
@@ -349,5 +483,5 @@ export class MapComponent implements AfterViewInit {
                 )
             )
             .subscribe(nextAreaSelectDimensionInPx => areaSelectHandler.setDimensions(nextAreaSelectDimensionInPx));
-    }
-}
+    }    
+  }
