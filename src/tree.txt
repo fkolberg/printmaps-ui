@@ -1,0 +1,153 @@
+.
+├── app
+│   ├── actions
+│   │   └── main.actions.ts
+│   ├── app.component.html
+│   ├── app.component.ts
+│   ├── app.module.ts
+│   ├── app-routing.module.ts
+│   ├── components
+│   │   ├── additional-element-list
+│   │   │   ├── additional-element-list.component.html
+│   │   │   ├── additional-element-list.component.scss
+│   │   │   └── additional-element-list.component.ts
+│   │   ├── additional-gpx-element-detail
+│   │   │   ├── additional-gpx-element-detail.component.html
+│   │   │   └── additional-gpx-element-detail.component.ts
+│   │   ├── additional-scale-element-detail
+│   │   │   ├── additional-scale-element-detail.component.html
+│   │   │   └── additional-scale-element-detail.component.ts
+│   │   ├── additional-text-element-detail
+│   │   │   ├── additional-text-element-detail.component.html
+│   │   │   └── additional-text-element-detail.component.ts
+│   │   ├── button-box
+│   │   │   ├── button-box.component.html
+│   │   │   └── button-box.component.ts
+│   │   ├── color-selector
+│   │   │   ├── color-selector.component.css
+│   │   │   ├── color-selector.component.html
+│   │   │   └── color-selector.component.ts
+│   │   ├── current-map-project-pane
+│   │   │   ├── current-map-project-pane.component.html
+│   │   │   ├── current-map-project-pane.component.ts
+│   │   │   └── remove-attribution-confirm-dialog.component.html
+│   │   ├── font-style-selector
+│   │   │   ├── font-style-selector.component.css
+│   │   │   ├── font-style-selector.component.html
+│   │   │   └── font-style-selector.component.ts
+│   │   ├── line-width-selector
+│   │   │   ├── line-width-selector.component.css
+│   │   │   ├── line-width-selector.component.html
+│   │   │   └── line-width-selector.component.ts
+│   │   ├── map
+│   │   │   └── map.component.ts
+│   │   ├── map-pane
+│   │   │   ├── map-pane.component.html
+│   │   │   └── map-pane.component.ts
+│   │   ├── map-project-list-pane
+│   │   │   ├── map-project-list-pane.component.html
+│   │   │   ├── map-project-list-pane.component.ts
+│   │   │   └── nonexistent-map-project-eviction-confirm-dialog.component.html
+│   │   └── text-orientation-selector
+│   │       ├── text-orientation-selector.component.css
+│   │       ├── text-orientation-selector.component.html
+│   │       └── text-orientation-selector.component.ts
+│   ├── directives
+│   │   └── numeric.directive.ts
+│   ├── effects
+│   │   └── main.effects.ts
+│   ├── model
+│   │   ├── api
+│   │   │   ├── map-rendering-job-definition.ts
+│   │   │   ├── map-rendering-job-state.ts
+│   │   │   ├── user-file.ts
+│   │   │   ├── user-object-metadata.ts
+│   │   │   └── user-object.ts
+│   │   └── intern
+│   │       ├── additional-element-style.ts
+│   │       ├── additional-element.ts
+│   │       ├── configuration.ts
+│   │       ├── geo-coordinates.ts
+│   │       ├── map-options.ts
+│   │       ├── map-project-reference.ts
+│   │       ├── map-project-state.ts
+│   │       ├── map-project.ts
+│   │       ├── paper-format.ts
+│   │       ├── paper-orientation.ts
+│   │       ├── print-location.ts
+│   │       ├── printmaps-ui-state.ts
+│   │       └── scale.ts
+│   ├── reducers
+│   │   └── main.reducers.ts
+│   ├── services
+│   │   ├── configuration.service.ts
+│   │   ├── gpx-data-map.service.ts
+│   │   ├── json-storage.service.ts
+│   │   ├── logging.service.ts
+│   │   ├── map-project-reference.service.ts
+│   │   ├── printmaps.service.ts
+│   │   ├── scale.service.ts
+│   │   └── template-service.ts
+│   └── utils
+│       ├── common.util.ts
+│       └── message.util.ts
+├── assets
+│   ├── actions
+│   │   ├── add.svg
+│   │   ├── delete.svg
+│   │   ├── download.svg
+│   │   ├── duplicate.svg
+│   │   └── launch-rendering.svg
+│   ├── additional-elements
+│   │   ├── attribution.svg
+│   │   ├── gpx-track.svg
+│   │   ├── scale.svg
+│   │   └── text-box.svg
+│   ├── edition-state
+│   │   └── edited-locally.svg
+│   ├── fontsets
+│   │   ├── bold.svg
+│   │   ├── italic.svg
+│   │   └── normal.svg
+│   ├── line-width
+│   │   ├── medium.svg
+│   │   ├── thick.svg
+│   │   └── thin.svg
+│   ├── map-project-state
+│   │   ├── nonexistent.svg
+│   │   ├── not-rendered.svg
+│   │   ├── ready-for-download.svg
+│   │   ├── rendering.svg
+│   │   ├── rendering-unsuccessful.svg
+│   │   └── waiting-for-rendering.svg
+│   ├── printmaps-ui.svg
+│   └── text-orientations
+│       ├── normal.svg
+│       ├── upside-down.svg
+│       ├── vertical-down.svg
+│       └── vertical-up.svg
+├── conf
+│   └── config.sample.json
+├── environments
+│   ├── environment.prod.ts
+│   └── environment.ts
+├── favicon.ico
+├── i18n
+│   ├── messages.de.xlf
+│   ├── messages.fr.xlf
+│   └── messages.xlf
+├── index.html
+├── local
+│   └── config.json
+├── main.ts
+├── original-assests
+│   └── printmaps-ui.svg
+├── polyfills.ts
+├── test.ts
+├── theming.scss
+├── tree.txt
+├── tsconfig.app.json
+├── tsconfig.spec.json
+└── typings.d.ts
+
+37 directories, 113 files

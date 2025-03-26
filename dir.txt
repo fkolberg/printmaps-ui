@@ -1,0 +1,20 @@
+insgesamt 812
+-rw-rw-r--   1 franz franz   2909 Feb 19 15:50 tslint.json
+-rw-rw-r--   1 franz franz    355 Feb 19 15:50 tsconfig.json
+drwxrwxr-x   4 franz franz   4096 Feb 19 16:31 target
+drwxrwxr-x   9 franz franz   4096 Feb 19 16:02 src
+-rw-rw-r--   1 franz franz   3680 Feb 19 15:50 README.md
+-rw-rw-r--   1 franz franz   8041 Feb 19 16:01 pom.xml
+-rw-rw-r--   1 franz franz   4375 Feb 19 16:08 pom_original.xml
+-rw-rw-r--   1 franz franz 705409 Feb 19 16:17 package-lock.json
+-rw-rw-r--   1 franz franz   2627 Feb 19 15:50 package.json
+drwxrwxr-x 874 franz franz  36864 Feb 19 16:17 node_modules
+drwxrwxr-x   3 franz franz   4096 Feb 19 16:15 node
+-rw-rw-r--   1 franz franz  11342 Feb 19 15:50 LICENSE
+-rw-rw-r--   1 franz franz   1276 Feb 19 15:50 karma.conf.js
+-rw-rw-r--   1 franz franz    579 Feb 19 15:50 karma.conf.ci.js
+drwxrwxr-x   2 franz franz   4096 Feb 19 15:50 docs
+-rw-rw-r--   1 franz franz      0 Mär 25 10:26 dir.txt
+-rw-rw-r--   1 franz franz    126 Feb 19 15:50 browserslist
+-rw-rw-r--   1 franz franz    721 Feb 19 15:50 assembly.xml
+-rw-rw-r--   1 franz franz   4707 Feb 19 15:50 angular.json

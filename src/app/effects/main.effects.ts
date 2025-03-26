@@ -12,7 +12,8 @@ import {
     map,
     mergeAll,
     switchMap,
-    takeWhile
+    takeWhile,
+    tap
 } from "rxjs/operators";
 import {Store} from "@ngrx/store";
 import {PrintmapsService} from "../services/printmaps.service";
@@ -27,6 +28,15 @@ import {ConfigurationService} from "../services/configuration.service";
 // noinspection JSUnusedGlobalSymbols
 @Injectable()
 export class MainEffects {
+
+    logActions = createEffect(
+        () => this.actions.pipe(
+          tap((action) => {
+            console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx Action Dispatched:", action);
+          })
+        ),
+        { dispatch: false } // Don't dispatch anything, this is just for logging purposes
+      );
 
     init = createEffect(
         () => this.actions
