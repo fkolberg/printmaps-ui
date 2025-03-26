@@ -22,7 +22,7 @@ export class AppComponent implements OnInit {
                 private sanitizer: DomSanitizer,
                 private loggingService: LoggingService) {
         
-        console.log(`xxxinfo AppComponent OnInit`);
+        console.log(`xxx info AppComponent OnInit`);
         
         this.registerIcons();
         store.dispatch(UiActions.loadMapProjectReferences());
@@ -34,8 +34,9 @@ export class AppComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        console.log(`xxxinfo AppComponent ngOnInit`);
-        this.logMessages();
+        console.log(`xxx info AppComponent ngOnInit`);
+        
+        //this.logMessages();
         
         this.store.dispatch(UiActions.init());
     }

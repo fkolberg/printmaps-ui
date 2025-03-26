@@ -13,16 +13,16 @@ export class JsonStorageService {
 
   // Store JSON data with a specific key
   storeJsonData(key: string, data: any): void {
-    console.log(`Stored data for key: ${key}`);
-    console.log(`data: ` + data);
+    console.log(`*** Stored data for key: ${key}`);
+    console.log(`*** data: ` + data);
     this.storageMap.set(key, data);    
   }
 
   // Retrieve JSON data by key
   getJsonData(key: string): any | undefined {
     let data =  this.storageMap.get(key);
-    console.log(`Load data for key: ${key}`);      
-    console.log(`data: ` + data);
+    console.log(`*** Load data for key: ${key}`);      
+    console.log(`*** data: ` + data);
     return data;
   }
 
@@ -35,14 +35,14 @@ export class JsonStorageService {
   removeJsonData(key: string): void {
     if (this.storageMap.has(key)) {
       this.storageMap.delete(key);
-      console.log(`Removed data for key: ${key}`);
+      console.log(`*** Removed data for key: ${key}`);
     }
   }
 
   // Clear all stored data
   clearAllData(): void {
     this.storageMap.clear();
-    console.log('Cleared all stored data');
+    console.log('*** Cleared all stored data');
   }
 
   // Get all keys in the map (for inspection or debugging)

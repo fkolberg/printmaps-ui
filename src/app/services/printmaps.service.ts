@@ -168,8 +168,6 @@ export class PrintmapsService {
     }
 
     loadMapProjectState(id: string): Observable<MapProjectState> {
-        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz printmaps.service.ts loadMapProjectState`);
-
         let endpointUrl = `${this.baseUrl}/mapstate/${id}`;
         return this.http.get<MapRenderingJobState>(endpointUrl)
             .pipe(
@@ -184,17 +182,15 @@ export class PrintmapsService {
     }
     
     loadMapProject(mapProjectReference: MapProjectReference): Observable<MapProject> {
-        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz printmaps.service.ts loadMapProject`);
-
         let endpointUrl = `${this.baseUrl}/metadata/${mapProjectReference.id}`;
         return this.http.get<MapRenderingJobDefinition>(endpointUrl)
             .pipe(
-                tap(mapRenderingJob => console.log('mapRenderingJob: ' + mapRenderingJob)),  // Use tap to log the mapRenderingJob
+                //tap(mapRenderingJob => console.log('zzzzzzzzzzzzzzzzzzzzzzzz mapRenderingJob: ' + mapRenderingJob)),  // Use tap to log the mapRenderingJob
                 map(mapRenderingJob => this.fromMapRenderingJob(mapProjectReference.name, mapRenderingJob)),
                 concatMap(mapProject =>
                     this.loadMapProjectState(mapProject.id)
                         .pipe(
-                            tap(mapProjectState => console.log('mapProjectState: ' + mapProjectState)),  // Use tap to log the mapRenderingJob
+                            //tap(mapProjectState => console.log('zzzzzzzzzzzzzzzzzzzzzzzz mapProjectState: ' + mapProjectState)),  // Use tap to log the mapRenderingJob
                             map(mapProjectState => {
                                 mapProject.state = mapProjectState;
                                 return mapProject;
@@ -237,8 +233,6 @@ export class PrintmapsService {
     }
   
     createOrUpdateMapRenderingJob(mapProject: MapProject): Observable<MapProject> {
-        console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz createOrUpdateMapRenderingJob`);
-        
         let endpointUrl = `${this.baseUrl}/metadata${mapProject.id ? "/patch" : ""}`;
         return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.toMapRenderingJob(mapProject), REQUEST_OPTIONS)
             .pipe(

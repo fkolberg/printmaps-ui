@@ -119,7 +119,7 @@ export class MapComponent implements AfterViewInit {
         `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz ngAfterViewInit` +
           " gpx1Xml " +
           gpx1Xml
-      );
+      ); // if (false)
 
       let gpx1TrackHandler = gpx.parse(gpx1Xml);
       gpx1TrackHandler.addTo(mapHandler); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -169,12 +169,9 @@ export class MapComponent implements AfterViewInit {
   private bindToStore() {
     // TODO: refactor direct binding to store to make map component reusable
 
-    console.log(
-      `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz map.component.ts bindToStore`
-    );
-
     /*
         Selecting the currentMapProject from the Store
+
 
         Purpose: 
         This part listens for changes in currentMapProject in the store, and whenever the state of currentMapProject changes, it updates the component properties (such as centerCoordinates, selectedArea, scale, and others) to reflect the new values.
@@ -197,10 +194,6 @@ export class MapComponent implements AfterViewInit {
         )
       )
       .subscribe((nextCurrentMapProject) => {
-        console.log(
-          `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz map.components this.store.select(currentMapProject)`
-        );
-
         if (nextCurrentMapProject) {
           this.centerCoordinates = L.latLng(
             nextCurrentMapProject.center.latitude,
@@ -254,14 +247,84 @@ export class MapComponent implements AfterViewInit {
         this.updateGpxTracks(additionalGpxElements): 
             Calls a method to update the GPX tracks on the map with the new GPX data.
     */
+    /*
+        this.store.select(currentAdditionalGpxElements):
+            This is selecting the currentAdditionalGpxElements from the NgRx store. 
+            this.store is the instance of the Store service in Angular, 
+            which provides access to the application state.
+            The select() method is used to subscribe to a specific slice of the state, 
+            in this case, the currentAdditionalGpxElements. 
+            It allows you to get a stream of updates to that state.
+        
+        .subscribe((additionalGpxElements) => { ... }):
+            After selecting the state (currentAdditionalGpxElements), 
+            .subscribe() is used to listen to any changes in that part of the store. 
+            When the currentAdditionalGpxElements state changes, 
+            the callback function inside subscribe gets triggered.
+            The argument additionalGpxElements inside the callback 
+            represents the current value of currentAdditionalGpxElements 
+            from the store at that moment. 
+            This will be passed each time the state is updated.
+
+        console.log(...):
+            This logs a message to the console every time the currentAdditionalGpxElements changes. 
+            It appears to be primarily for debugging purposes 
+            and allows you to observe when this part of the state is updated.
+
+        this.updateGpxTracks(additionalGpxElements):
+            After logging the state, the code calls this.updateGpxTracks(additionalGpxElements) 
+            with the latest additionalGpxElements.
+            This suggests that the method updateGpxTracks is responsible 
+            for updating or rendering GPX tracks on a map 
+            or processing the additionalGpxElements in some other way.
+            The method likely takes the additionalGpxElements data 
+            and uses it to update the UI (for example, plotting the GPX tracks on a map).
+    */
+    /*
+        What Happens When the State Changes?
+            
+        Whenever the currentAdditionalGpxElements in the store is updated:
+            The select() method fetches the new value of currentAdditionalGpxElements.
+            The subscribe() callback is triggered, 
+            and the new value of additionalGpxElements is passed to the callback function.
+            The console.log prints a message showing that the store has been updated.
+            The updateGpxTracks() method is called to update the GPX tracks based on the new data.
+    */
+    /*
     this.store
       .select(currentAdditionalGpxElements)
       .subscribe((additionalGpxElements) => {
-        console.log(
-          `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz map.components this.store.select(currentAdditionalGpxElements)`
-        );
-
         this.updateGpxTracks(additionalGpxElements);
+      });
+    */
+    /*
+      Ah, I see! 
+      You want to pass both the id of the currentMapProject 
+      and the additionalGpxElements to the updateGpxTracks method.
+      You can achieve this by subscribing to both the currentMapProject 
+      and the currentAdditionalGpxElements from the store, 
+      and passing both values together to the updateGpxTracks method.
+    */
+    // Subscribe to both observables
+    this.store
+      .select(currentMapProject) // Select currentMapProject from the store
+      .pipe(
+        filter((currentMapProject) => !!currentMapProject) // Ensure the map project exists
+      )
+      .subscribe((currentMapProject) => {
+        // Select additionalGpxElements from the store
+        this.store
+          .select(currentAdditionalGpxElements) // Select the additionalGpxElements from the store
+          .pipe(
+            filter((additionalGpxElements) => !!additionalGpxElements) // Ensure that additionalGpxElements exist
+          )
+          .subscribe((additionalGpxElements) => {
+            // Now, call updateGpxTracks with both the id and the additionalGpxElements
+            if (currentMapProject && additionalGpxElements) {
+              const mapProjectId = currentMapProject.id;
+              this.updateGpxTracks(mapProjectId, additionalGpxElements);
+            }
+          });
       });
 
     /*
@@ -312,25 +375,8 @@ export class MapComponent implements AfterViewInit {
     let gpxElementIdsToRemove = new Set<string>(
       this.gpxTrackHandlerByElementId.keys()
     );
-
     additionalGpxElements.forEach((additionalGpxElement) => {
-      console.log(
-        `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks` +
-          " additionalGpxElement.id " +
-          additionalGpxElement.id
-      );
-      console.log(
-        `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks` +
-          " additionalGpxElement.file?.name " +
-          additionalGpxElement.file?.name
-      );
-
       if (additionalGpxElement.file?.data) {
-        this.jsonStorageService.storeJsonData(
-          additionalGpxElement.file?.name,
-          additionalGpxElement.file?.data
-        );
-
         gpxElementIdsToRemove.delete(additionalGpxElement.id);
         let style = {
           weight: additionalGpxElement.style.lineWidth,
@@ -350,7 +396,7 @@ export class MapComponent implements AfterViewInit {
         if (!currentGpxTrackHandler || modified) {
           let gpxTrackHandler = gpx.parse(additionalGpxElement.file.data);
           gpxTrackHandler.setStyle(() => style);
-          gpxTrackHandler.addTo(this.mapHandler); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          gpxTrackHandler.addTo(this.mapHandler);
           this.gpxTrackHandlerByElementId.set(
             additionalGpxElement.id,
             gpxTrackHandler
@@ -362,10 +408,6 @@ export class MapComponent implements AfterViewInit {
         } else {
           currentGpxTrackHandler.setStyle(() => style);
         }
-      } else {
-        console.log(
-          `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks else`
-        );
       }
     });
     gpxElementIdsToRemove.forEach((id) => {
@@ -377,48 +419,51 @@ export class MapComponent implements AfterViewInit {
     });
   }
 
-  private updateGpxTracks(additionalGpxElements: AdditionalGpxElement[]) {
+  /*
+    // remove all layers
+    this.mapHandler.eachLayer(function(layer) {
+      this.mapHandler.removeLayer(layer);  // Remove each layer
+    });
+
+  */
+
+  private updateGpxTracks(
+    mapProjectId: string,
+    additionalGpxElements: AdditionalGpxElement[]
+  ) {
+    // Log the incoming parameters
+    console.log("+++ Incoming Map Project ID:", mapProjectId);
+
+    // Log the size of the additionalGpxElements array
+    console.log(
+      "+++ Number of Additional GPX Elements:",
+      additionalGpxElements.length
+    );
+
+    // Use JSON.stringify to log the entire array (nicely formatted)
+    console.log(
+      "+++ Incoming Additional GPX Elements:",
+      JSON.stringify(additionalGpxElements, null, 2)
+    );
+
     let gpxElementIdsToRemove = new Set<string>(
       this.gpxTrackHandlerByElementId.keys()
     );
 
-    console.log(
-      `!!!!!!!!!! zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks` +
-        " top gpxElementIdsToRemove: " +
-        [...gpxElementIdsToRemove]
-    );
-
     additionalGpxElements.forEach((additionalGpxElement) => {
-      console.log(
-        `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks` +
-          " additionalGpxElement.id " +
-          additionalGpxElement.id
-      );
-      console.log(
-        `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks` +
-          " additionalGpxElement.file?.name " +
-          additionalGpxElement.file?.name
-      );
-
-      // Hack !!!
-      /*
-            if (additionalGpxElement.file?.name) {
-                if (additionalGpxElement.file.data) {
-                    console.log('additionalGpxElement.file.data:', additionalGpxElement.file.data);
-                } else {
-                    this.jsonStorageService.getJsonData(additionalGpxElement.file.name);
-                    console.log('Updated data:', additionalGpxElement.file.data);
-                }
-            } else {
-                console.log('No file name found for the GPX element.');
-            } 
-            */
-
       if (additionalGpxElement.file?.data) {
-        this.jsonStorageService.storeJsonData(
-          additionalGpxElement.file?.name,
-          additionalGpxElement.file?.data
+        // !!! hack
+        console.log(
+          "+++ perhaps storing additionalGpxElement.file?.data ... mapProjectId: " +
+            mapProjectId
         );
+
+        if (false) {
+          this.jsonStorageService.storeJsonData(
+            additionalGpxElement.file?.name,
+            additionalGpxElement.file?.data
+          );
+        }
 
         gpxElementIdsToRemove.delete(additionalGpxElement.id);
         let style = {
@@ -438,13 +483,23 @@ export class MapComponent implements AfterViewInit {
         }
         if (!currentGpxTrackHandler || modified) {
           let gpxTrackHandler = gpx.parse(additionalGpxElement.file.data);
+
+          console.log(
+            "+++ gpxTrackHandler.trk[0].name: " + gpxTrackHandler.trk[0].name
+          );
+
           gpxTrackHandler.setStyle(() => style);
           gpxTrackHandler.addTo(this.mapHandler); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-          GpxDataMap.addGpxData(
-            gpxTrackHandler,
-            additionalGpxElement.file?.data
-          );
+          // Remove the GPX track from the map
+          //gpxTrackHandler.remove();
+
+          if (false) {
+            GpxDataMap.addGpxData(
+              gpxTrackHandler,
+              additionalGpxElement.file?.data
+            );
+          }
 
           this.gpxTrackHandlerByElementId.set(
             additionalGpxElement.id,
@@ -458,24 +513,14 @@ export class MapComponent implements AfterViewInit {
           currentGpxTrackHandler.setStyle(() => style);
         }
       } else {
-        console.log(
-          `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks else`
-        );
+        console.log(`+++ updateGpxTracks else`);
       }
     });
 
-    console.log(
-      `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks` +
-        " buttom gpxElementIdsToRemove: " +
-        [...gpxElementIdsToRemove]
-    );
     gpxElementIdsToRemove.forEach((id) => {
       let gpxHandler = this.gpxTrackHandlerByElementId.get(id);
       if (gpxHandler) {
-        console.log(
-          `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz updateGpxTracks remove id: ` +
-            id
-        );
+        console.log(`+++ updateGpxTracks remove id: ` + id);
 
         //gpxHandler.remove();
       }
@@ -495,10 +540,6 @@ export class MapComponent implements AfterViewInit {
     startSyncModelToMap: Subject<any>,
     endSyncModelToMap: Subject<any>
   ) {
-    console.log(
-      `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz map.component.ts syncModelToMap`
-    );
-
     startSyncModelToMap
       .pipe(
         switchMap(() =>
@@ -523,10 +564,6 @@ export class MapComponent implements AfterViewInit {
     startSyncModelToMap: Subject<any>,
     endSyncModelToMap: Subject<any>
   ) {
-    console.log(
-      `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz map.component.ts syncMapToModel`
-    );
-
     fromEvent(mapHandler, "movestart")
       .pipe(
         tap(() => endSyncModelToMap.next()),
