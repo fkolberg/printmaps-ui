@@ -322,7 +322,8 @@ export class MapComponent implements AfterViewInit {
             // Now, call updateGpxTracks with both the id and the additionalGpxElements
             if (currentMapProject && additionalGpxElements) {
               const mapProjectId = currentMapProject.id;
-              this.updateGpxTracks(mapProjectId, additionalGpxElements);
+              this.updateGpxTracks(additionalGpxElements);
+              //this.test_updateGpxTracks(mapProjectId, additionalGpxElements);
             }
           });
       });
@@ -371,7 +372,7 @@ export class MapComponent implements AfterViewInit {
       );
   }
 
-  private updateGpxTracks_orig(additionalGpxElements: AdditionalGpxElement[]) {
+  private updateGpxTracks(additionalGpxElements: AdditionalGpxElement[]) {
     let gpxElementIdsToRemove = new Set<string>(
       this.gpxTrackHandlerByElementId.keys()
     );
@@ -427,7 +428,7 @@ export class MapComponent implements AfterViewInit {
 
   */
 
-  private updateGpxTracks(
+  private test_updateGpxTracks(
     mapProjectId: string,
     additionalGpxElements: AdditionalGpxElement[]
   ) {
