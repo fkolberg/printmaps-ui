@@ -1,3 +1,5 @@
+// map-project.ts
+
 import {MapRenderingJobExecution} from "../api/map-rendering-job-definition";
 import {Scale} from "./scale";
 import {MapProjectState} from "./map-project-state";

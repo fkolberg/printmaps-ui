@@ -14,6 +14,7 @@ import {
   switchMap,
   takeWhile,
   tap,
+  catchError,
 } from "rxjs/operators";
 import { Store } from "@ngrx/store";
 import { PrintmapsService } from "../services/printmaps.service";
@@ -240,4 +241,39 @@ export class MainEffects {
     private mapProjectReferenceService: MapProjectReferenceService,
     private printmapsService: PrintmapsService
   ) {}
+
+  // Effect to handle file upload
+  uploadUserFile$ = createEffect(() =>
+    this.actions.pipe(
+      ofType(UiActions.uploadUserFile),
+      switchMap(({ id, userFile }) => {
+        return this.printmapsService.uuploadUserFile(id, userFile).pipe(
+          map((success) => {
+            if (success) {
+              // Dispatch userFileUploaded action if upload is successful
+              return UiActions.userFileUploaded({ id, userFile });
+            } else {
+              // Dispatch uploadUserFileFailed action if upload fails
+              return UiActions.uploadUserFileFailed({
+                id,
+                userFile,
+                error: 'Upload failed due to unknown error' // You can customize the error message
+              });
+            }
+          }),
+          catchError((error) => {
+            console.error('Error during file upload:', error);
+            return of(
+              UiActions.uploadUserFileFailed({
+                id,
+                userFile,
+                error: error.message || 'Error occurred during upload'
+              })
+            );
+          })
+        );
+      })
+    )
+  );
+  
 }

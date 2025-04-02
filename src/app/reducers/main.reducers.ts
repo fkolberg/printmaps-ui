@@ -174,10 +174,59 @@ const reducer = createReducer(initialState,
                 }
                 : state.currentMapProject
         })),
+    
+    /*
+        Summary:
+        This handler listens for the addAdditionalElement action, 
+        creates a new element based on the provided type, 
+        updates the map project by adding that element, 
+        and then sets that element as the selected one. 
+        This is a common pattern in state management where changes to the state 
+        (like adding elements to a list) are done immutably 
+        to maintain predictable and traceable state updates.
 
+        Purpose of the Code:
+        The action adds a new additional element 
+        (such as a text box or scale) to the map project.
+        The state is updated to reflect the changes, 
+        and the newly added element is set as the selected element, 
+        which might trigger the UI to show its properties or make it editable.
+    */
+    /*
+        This is an action handler for the addAdditionalElement action. 
+        When this action is dispatched, the reducer will execute 
+        the function provided here.
+        The elementType is passed as part of the action payload, 
+        which tells us the type of element 
+        (e.g., text box, scale, attribution) that needs to be added.
+    */
     on(UiActions.addAdditionalElement,
         (state, {elementType}) => {
+            /*
+                Create the New Element:
+                The createAdditionalElement function is called with the currentMapProject 
+                (from the current state) and the elementType (from the action payload).
+                This function generates a new element of the specified type 
+                (such as a text box or scale). 
+                This new element includes properties like id, text, style, and location.
+            */
             let newElement = createAdditionalElement(state.currentMapProject, elementType);
+            /*
+                Update the State:
+                The state is being returned as a new object, 
+                making use of immutable updates (spreading state).
+                Updating currentMapProject:
+                    If currentMapProject exists (i.e., the map project is not null or undefined), 
+                    a new currentMapProject object is returned.
+                    The new currentMapProject includes:
+                        A modifiedLocally: true flag indicating that the map project has been changed locally (unsaved).
+                        The additionalElements array is updated by appending the newly created element (newElement) to the existing array of elements.
+                Selecting the New Element:
+                 The selectedAdditionalElementId is updated to the ID of the newly created element
+                 (newElement.id), making the newly added element the "selected" one in the UI.
+                 
+                 If currentMapProject does not exist (which should not happen if a map project is loaded), the state would remain unchanged.
+            */
             return {
                 ...state,
                 currentMapProject: state.currentMapProject
@@ -193,7 +242,7 @@ const reducer = createReducer(initialState,
                 selectedAdditionalElementId: newElement.id
             };
         }),
-
+    
     on(UiActions.selectAdditionalElement,
         (state, {id}) => ({
             ...state,
@@ -237,19 +286,59 @@ const reducer = createReducer(initialState,
             }
         ),
         
-
+    /*
+        This is the action handler for updateAdditionalElement. 
+        When this action is dispatched, the reducer executes this function.
+        The payload of the action contains an element object,
+        which represents the updated version of an existing element. 
+        The element has an id that is used to find and update the corresponding element 
+        in the additionalElements array.
+    */
     on(UiActions.updateAdditionalElement,
         (state, {element}) => ({
+            /*
+                Spreading the state:
+                The state is being updated immutably, 
+                so the first thing is to spread the existing state (...state) 
+                to ensure that any unchanged properties remain intact.
+            */
             ...state,
+            /*
+                Updating currentMapProject:
+                The reducer checks if currentMapProject exists (state.currentMapProject).
+                If it exists, the currentMapProject is updated by creating a new object 
+                using ...state.currentMapProject. This ensures that the state remains immutable.
+            */
             currentMapProject: state.currentMapProject
                 ? {
                     ...state.currentMapProject,
+                    /*
+                        Setting modifiedLocally: true:
+                        The modifiedLocally flag is set to true to indicate 
+                        that the map project has been modified but not yet saved.
+                    */
                     modifiedLocally: true,
+                    /*
+                        Modifying additionalElements:
+                        The additionalElements array in currentMapProject is updated. 
+                        The array is processed using the map function:
+                            It checks each element (currentElement) in additionalElements.
+                            If the id of currentElement matches the id of the updated element 
+                            (from the action payload), it replaces that element with the updated element.
+                             Otherwise, the currentElement is kept as is.
+                        This ensures that only the element with the matching id gets updated, 
+                        while all other elements remain unchanged.
+                    */
                     additionalElements: state.currentMapProject.additionalElements
                         .map(currentElement => currentElement.id == element.id
                             ? element
                             : currentElement)
                 }
+                /*
+                    If currentMapProject doesn't exist:
+                    If for some reason currentMapProject is null or undefined 
+                    (which would be an unusual case), the state is returned unchanged.
+                */
                 : state.currentMapProject
         }))
 );

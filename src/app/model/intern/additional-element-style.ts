@@ -1,3 +1,5 @@
+// additional-element-style.ts
+
 import {
     AdditionalElement,
     AdditionalGpxElement,
@@ -63,10 +65,12 @@ function convertAdditionalTextElementToSymbolizer(templateService: TemplateServi
 }
 
 function convertAdditionalTrackElementToSymbolizer(_templateService: TemplateService, _mapProject: MapProject, element: AdditionalGpxElement): string {
+    console.log("convertAdditionalTrackElementToSymbolizer element.file.data:", element.file.data);
     let metadata: UserObjectMetadata = {
         ID: element.id,
         Type: element.type,
-        File: element.file?.name
+        File: element.file?.name,
+        Data: element.file?.data // ?????????????????????????????? !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     };
     //return `<!--${JSON.stringify(metadata)}--><LineSymbolizer stroke='${element.style.lineColor.rgbHexValue}' stroke-width='${element.style.lineWidth}' stroke-opacity='${element.style.lineColor.opacity}' stroke-linecap='round' stroke-linejoin='round' smooth='1' />`;
     

@@ -8,6 +8,8 @@ import {MapProjectState} from "../model/intern/map-project-state";
 import {GeoCoordinates} from "../model/intern/geo-coordinates";
 import {AdditionalElementType, AnyAdditionalElement} from "../model/intern/additional-element";
 
+import {UserFile} from "../model/api/user-file";
+
 const SOURCE = "Printmaps UI";
 
 export const init = createAction(
@@ -78,6 +80,9 @@ export const mapProjectDeleted = createAction(
 
 export type UploadMapProjectFollowUpAction = "close" | "copy" | "launchRendering";
 
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+export type UploadUserFileFollowUpAction = "close" | "copy";
+
 export const uploadMapProject = createAction(
     createActionType(SOURCE, "UPLOAD_MAP_PROJECT"),
     props<{ mapProject: MapProject, followUpAction?: UploadMapProjectFollowUpAction }>()
@@ -88,9 +93,37 @@ export const mapProjectUploaded = createAction(
     props<{ mapProjectReference: MapProjectReference, followUpAction?: UploadMapProjectFollowUpAction }>()
 );
 
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+export const uploadUserFile = createAction(
+    createActionType(SOURCE, "UPLOAD_USER_FILE"),
+    props<{ id: string, userFile: UserFile, followUpAction?: UploadUserFileFollowUpAction }>()
+);
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+export const userFileUploaded = createAction(
+    createActionType(SOURCE, "USER_FILE_UPLOADED"),
+    props<{ id: string, userFile: UserFile, followUpAction?: UploadUserFileFollowUpAction }>()
+);
+
+// New action to handle the failure case
+export const uploadUserFileFailed = createAction(
+    '[UI] Upload User File Failed',
+    props<{ id: string, userFile: UserFile, error: string }>() // You can include an error message if needed
+  );
+
 export function createUploadMapProjectFollowUpAction(followUpAction: UploadMapProjectFollowUpAction, id: string) {
     return followUpAction == "launchRendering" ? launchMapProjectRendering({id: id}) : undefined;
 }
+
+export const loadUserFile = createAction(
+    createActionType(SOURCE, "LOAD_USER_FILE"),
+    props<{ userFile: UserFile }>()
+);
+
+export const userFileLoaded = createAction(
+    createActionType(SOURCE, "USER_FILE_LOADED"),
+    props<{ userFile: UserFile }>()
+);
 
 export const launchMapProjectRendering = createAction(
     createActionType(SOURCE, "LAUNCH_MAP_PROJECT_RENDERING"),

@@ -1,3 +1,5 @@
+// additional-gpx-element-detail.component.ts
+
 import {Component, Input, OnDestroy, Self} from "@angular/core";
 import {AdditionalGpxElement} from "../../model/intern/additional-element";
 import {ControlValueAccessor, FormBuilder, FormGroup, NgControl} from "@angular/forms";

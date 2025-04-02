@@ -106,6 +106,24 @@ export class MapComponent implements AfterViewInit {
     let mapHandler = L.map("map", { zoom: 12 });
     MapComponent.addOsmLayer(mapHandler);
 
+    /******************************** 
+    let mapProjectId = "";
+    this.store.select(currentMapProject).subscribe(cp => {
+     mapProjectId = cp.id;
+    });
+
+    mapProjectId = "f4b0d841-3a88-4e16-af88-461f4edbe85c";
+    this.store.dispatch(
+      UiActions.uploadUserFile({
+        id: mapProjectId,
+        userFile: {               
+          name: "bla",
+          content: "blub"        
+        }
+      })
+    );
+    */
+
     // ***********************************************
     if (false) {
       //MapComponent.addTestLayer(mapHandler);
@@ -167,14 +185,17 @@ export class MapComponent implements AfterViewInit {
     whenever certain component properties change.
   */
   private bindToStore() {
+    console.log(">>> bindToStore");
     // TODO: refactor direct binding to store to make map component reusable
 
     /*
         Selecting the currentMapProject from the Store
 
-
         Purpose: 
-        This part listens for changes in currentMapProject in the store, and whenever the state of currentMapProject changes, it updates the component properties (such as centerCoordinates, selectedArea, scale, and others) to reflect the new values.
+        This part listens for changes in currentMapProject in the store, 
+        and whenever the state of currentMapProject changes, 
+        it updates the component properties 
+        (such as centerCoordinates, selectedArea, scale, and others) to reflect the new values.
 
         Key points:
         this.store.select(currentMapProject): This selects the current map project from the store.
@@ -373,6 +394,7 @@ export class MapComponent implements AfterViewInit {
   }
 
   private updateGpxTracks(additionalGpxElements: AdditionalGpxElement[]) {
+    console.log("+++ updateGpxTracks");
     let gpxElementIdsToRemove = new Set<string>(
       this.gpxTrackHandlerByElementId.keys()
     );
@@ -392,12 +414,14 @@ export class MapComponent implements AfterViewInit {
           new Date().getTime();
         let modified = additionalGpxElement.file.modified > lastUpdate;
         if (currentGpxTrackHandler && modified) {
+          console.log("+++ updateGpxTracks remove file.name:" + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
           currentGpxTrackHandler.remove();
         }
         if (!currentGpxTrackHandler || modified) {
           let gpxTrackHandler = gpx.parse(additionalGpxElement.file.data);
           gpxTrackHandler.setStyle(() => style);
           gpxTrackHandler.addTo(this.mapHandler);
+          console.log("+++ updateGpxTracks add file.name: " + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
           this.gpxTrackHandlerByElementId.set(
             additionalGpxElement.id,
             gpxTrackHandler
@@ -415,8 +439,10 @@ export class MapComponent implements AfterViewInit {
       let gpxHandler = this.gpxTrackHandlerByElementId.get(id);
       if (gpxHandler) {
         gpxHandler.remove();
+        console.log("+++ updateGpxTracks remove id:" + id);
       }
       this.gpxTrackHandlerByElementId.delete(id);
+      console.log("+++ updateGpxTracks delete id:" + id);
     });
   }
 
