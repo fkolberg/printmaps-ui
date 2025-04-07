@@ -278,10 +278,21 @@ export class MainEffects {
   // Effect to handle file upload
   uploadUserFile$ = createEffect(() =>
     this.actions.pipe(
-      ofType(UiActions.uploadMapProject), 
+      ofType(UiActions.uploadUserFile), 
       tap((action) => {
         // Log the mapProject or any other relevant data
         console.log('!!!!!! uploadUserFile effect triggered for mapProject: ', action.mapProject);
+      })
+    ), { dispatch: false }  // No action is dispatched, only a side effect
+  );
+
+  // Effect to handle file upload
+  loadUserFile$ = createEffect(() =>
+    this.actions.pipe(
+      ofType(UiActions.loadUserFile), 
+      tap((action) => {
+        // Log the mapProject or any other relevant data
+        console.log('!!!!!! loadUserFile effect triggered for mapProjectReference: ', action.mapProjectReference);
       })
     ), { dispatch: false }  // No action is dispatched, only a side effect
   );
