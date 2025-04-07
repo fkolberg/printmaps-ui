@@ -52,6 +52,8 @@ export class CurrentMapProjectPaneComponent {
             )
             .subscribe(nextValue => {
                 if (this.mapProject?.id && this.mapProject?.modifiedLocally && this.mapProject?.id != nextValue.id) {
+                    // Log the mapProject to the console before dispatching the action
+                    console.log('>>> Dispatching upload for mapProject:', this.mapProject);
                     store.dispatch(UiActions.uploadMapProject({mapProject: this.mapProject}));
                 }
                 this.mapProject = cloneDeep(nextValue);

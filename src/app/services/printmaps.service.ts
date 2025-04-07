@@ -302,198 +302,151 @@ export class PrintmapsService {
     /*
         mapProjectId is in data returned by function toMapRenderingJob(...)
     */
-  createOrUpdateMapRenderingJob(
-    mapProject: MapProject
-  ): Observable<MapProject> {
-    let endpointUrl = `${this.baseUrl}/metadata${
-      mapProject.id ? "/patch" : ""
-    }`;
-    console.log("createOrUpdateMapRenderingJob endpointUrl: " + endpointUrl);
-    return this.http
-      .post<MapRenderingJobDefinition>(
-        endpointUrl,
-        this.toMapRenderingJob(mapProject),
-        REQUEST_OPTIONS
-      )
-      /*
-        The .pipe() method allows chaining multiple RxJS operators. 
-        Let's break down each operator used:
-      */
-      .pipe(
+   /*
+    Input:
+      mapProject: This is the parameter of type MapProject passed into the function. 
+      It represents the map project you are working with.
+    Return type: 
+      The function returns an Observable<MapProject>. 
+      This means that it will emit a MapProject object once the observable completes. 
+      Observables are a way of handling asynchronous operations in Angular (and RxJS).
+   */
+    createOrUpdateMapRenderingJob(mapProject: MapProject): Observable<MapProject> {
+      let endpointUrl = `${this.baseUrl}/metadata${mapProject.id ? "/patch" : ""}`;
+      return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.toMapRenderingJob(mapProject), REQUEST_OPTIONS)
         /*
-            map:
-            The first map operator transforms the response of the POST request 
-            (likely a MapRenderingJobDefinition) into a map project 
-            using this.fromMapRenderingJob(). 
-            This likely converts the response into a more convenient format 
-            for the rest of the process, 
-            and it appears to add the mapProject.name to the data.
-        */
-        map((mapRenderingJob) =>
-          this.fromMapRenderingJob(mapProject.name, mapRenderingJob)
-        ),
-        /*
-            tap:
-            the tap operator is used for side effects. 
-            It performs an operation without modifying the observable stream itself.
-            Here, it iterates over each user file 
-            (likely obtained from this.toUserFiles(mapProject)), 
-            and uploads each file using this.uploadUserFile(). 
-            It uses .forEach() to iterate over the files and calls .subscribe() on each file upload.
-            Important: The subscribe() method here is not ideal, 
-            as it creates side effects but doesn't manage the asynchronous nature 
-            of the file uploads properly. 
-            This could result in potential issues where the file uploads may not complete 
-            before the subsequent logic is executed (e.g., loading the map project state).
-            Ideally, this part should be refactored to properly handle asynchronous operations 
-            in a chain rather than using subscribe() inside tap.
-        */
-        tap((savedMapProject) =>
-          this.toUserFiles(mapProject).forEach((userFile) =>
-            this.uploadUserFile(
-              savedMapProject.id,
-              userFile.content,
-              userFile.name
-            ).subscribe()
-          )
-        ),
-        /*
-            concatMap:
-            After handling file uploads, 
-            the concatMap operator is used to load the map project state. 
-            It receives the savedMapProject and makes another asynchronous call 
-            to this.loadMapProjectState(savedMapProject.id), 
-            which probably returns an observable with the map project's state.
-            The result of the loadMapProjectState call is merged with the savedMapProject 
-            by using map to return a new object that combines both the savedMapProject 
-            and its updated state.
-            The use of concatMap ensures that this operation is done sequentially, 
-            waiting for the map project state to be loaded before proceeding.
-        */
-        concatMap((savedMapProject) =>
-          this.loadMapProjectState(savedMapProject.id).pipe(
-            map((mapProjectState) => ({
-              ...savedMapProject,
-              state: mapProjectState,
-            }))
-          )
-        ),
-        /* 
-            catchError:
-            If any error occurs at any point in the pipeline, 
-            the catchError operator catches the error.
-            Instead of throwing the error, it returns EMPTY, 
-            which is an empty observable, 
-            effectively ending the observable stream without further action.
-            This prevents the stream from failing completely 
-            if there’s an error (for example, if the HTTP request fails 
-            or if there's an issue with the file upload), 
-            but it may hide errors that might be important to log or handle differently.
-        */
-        catchError(() => EMPTY)
-      );
-  }
-  ccccreateOrUpdateMapRenderingJob(
-    mapProject: MapProject
-  ): Observable<MapProject> {
-    let endpointUrl = `${this.baseUrl}/metadata${
-      mapProject.id ? "/patch" : ""
-    }`;
-    console.log("createOrUpdateMapRenderingJob endpointUrl: " + endpointUrl);
-    return this.http
-      .post<MapRenderingJobDefinition>(
-        endpointUrl,
-        this.toMapRenderingJob(mapProject),
-        REQUEST_OPTIONS
-      )
-      .pipe(
-        map((mapRenderingJob) =>
-          this.fromMapRenderingJob(mapProject.name, mapRenderingJob)
-        ),
-        tap((savedMapProject) =>
-          this.toUserFiles(mapProject).forEach((userFile) =>
-            this.uploadUserFile(
-              savedMapProject.id,
-              userFile.content,
-              userFile.name
-            ).subscribe()
-          )
-        ),
-        /*******************************************/
-        // You can add additional logic here (e.g., log or do other side-effects)
-        /*
-                concatMap(savedMapProject => {
-                    console.log("Map project state updated:", savedMapProject);
-                    return of(savedMapProject); // Ensure you return an observable (of(savedMapProject))
-                }),
-                */
-        concatMap((savedMapProject) =>
-          this.loadMapProjectState(savedMapProject.id).pipe(
-            map((mapProjectState) => ({
-              ...savedMapProject,
-              state: mapProjectState,
-            }))
-          )
-        ),
-        /*******************************************/
+          The .pipe() method is used to chain multiple RxJS operators together. 
+          These operators are used to manipulate or interact with the stream of data 
+          returned by the HTTP request. 
+          
+          Let's go over each operator one by one:
+          mapRenderingJob: The result of the POST request is mapped into a MapRenderingJob 
+          (which is probably returned by the backend).
+          the map operator transforms the response of the HTTP request.
+          this.fromMapRenderingJob(mapProject.name, mapRenderingJob): 
+            This function takes the mapRenderingJob returned from the backend 
+            And probably converts it into a MapProject format 
+            (possibly adding the mapProject.name to the resulting object).
+            The goal here is to take the backend response and return a modified version of it 
+            that fits your application's model for MapProject.
 
-        /*******************************************/
-        catchError(() => EMPTY)
-      );
-  }
+          The tap operator is used to perform side effects without modifying the stream of data. 
+          It's typically used for logging, triggering actions, etc.
+          this.toUserFiles(mapProject): 
+            This function likely takes the mapProject and converts it into an array of user files.
+          this.uploadUserFile(savedMapProject.id, userFile.content, userFile.name).subscribe(): 
+            For each user file, this triggers the file upload by calling the uploadUserFile method 
+            with the file's content and name. 
+            The .subscribe() method triggers the file upload, but using .subscribe() inside tap() 
+            is not ideal as it doesn't manage the asynchronous nature well 
+            (this is a potential issue for improvement, as explained in previous responses).
 
-  // Get http://printmaps-osm.de:8383/api/beta2/maps/uidata/57cf90f3-ceb9-43f1-ab59-ba73abe1c88e (Beispiel)
-  createOrUpdateUserFile(mapProject: MapProject) {
-    // Create a Blob from the content
-    let content = "ccccccccccccccccccccccccccccccoooonntent";
-    const blob = new Blob([content], { type: "text/plain" });
+          This part of the code uploads the user files 
+          but does not wait for the uploads to complete before moving on to the next operation.
 
-    // Read the Blob content as text and log it
-    blob
-      .text()
-      .then((text) => {
-        console.log(
-          `************************************************************************`
+          concatMap: 
+            This operator is used to switch to a new observable 
+            and wait for that observable to complete before moving on. 
+            It's particularly useful when you want to make an HTTP request 
+            or do some asynchronous task and wait for it to finish 
+            before continuing with the next part of the flow.
+            Here, it makes a loadMapProjectState(savedMapProject.id) HTTP call 
+            to fetch the current state of the map project 
+            (perhaps some additional metadata or data that the map needs).
+            After the state is loaded, it merges the state into the savedMapProject 
+            by using the map operator to create a new object. 
+            This new object contains both the savedMapProject and its state as a property.
+        */  
+        .pipe(
+              map(mapRenderingJob => this.fromMapRenderingJob(mapProject.name, mapRenderingJob)),
+              tap(savedMapProject =>
+                  this.toUserFiles(mapProject).forEach(userFile =>
+                      this.uploadUserFile(savedMapProject.id, userFile.content, userFile.name).subscribe())),
+              concatMap(savedMapProject =>
+                  this.loadMapProjectState(savedMapProject.id)
+                      .pipe(
+                          map(mapProjectState => ({
+                                  ...savedMapProject,
+                                  //savedMapProject,
+                                  state: mapProjectState
+                              }),                                                  
+                          )
+                      )
+              ),
+              // HACK
+              tap(() => {
+                console.log(">>> blaaaaaaaaa All files uploaded for Map Project ID:");
+              }),   
+              
+              // HACK
+               // Step 4: Make another HTTP POST request to upload the file
+               /*
+      concatMap(({ savedMapProject, state }) => {
+        const secondEndpointUrl = `${this.baseUrl}/upload/${savedMapProject.id}`;
+
+        const contentBlob = new Blob([JSON.stringify(savedMapProject)], { type: 'application/json' });
+        const filename = `${savedMapProject.id}.ui`;
+        const formData = new FormData();
+        formData.append('file', contentBlob, filename);
+
+        // Perform the second HTTP POST to upload the file
+        return this.http.post(secondEndpointUrl, formData, {
+          headers: {
+            'Accept': 'application/vnd.api+json; charset=utf-8'
+          },
+          observe: 'response'
+        }).pipe(
+          tap((response) => {
+            if (response.status === 201) {
+              console.log('✅ UI file uploaded (201 Created)');
+            } else {
+              console.warn(`⚠️ UI file upload returned: ${response.status}`);
+            }
+          }),
+          // Return the savedMapProject after the upload is complete
+          mapTo(savedMapProject)
         );
-        console.log(
-          `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz uploadUserFile: ${text}`
-        );
-        console.log(
-          `************************************************************************`
-        );
-      })
-      .catch((err) => {
-        console.error("Error reading the Blob content", err);
-      });
-
-    let name = mapProject.id + ".ui";
-    let formData = new FormData();
-    formData.append(
-      "file",
-      new Blob([content], { type: "image/svg+xml" }),
-      name
-    );
-    let endpointUrl = `${this.baseUrl}/upload/${name}`;
-
-    let requestOptions = {
-      headers: new HttpHeaders({
-        Accept: "application/vnd.api+json; charset=utf-8",
       }),
-    };
-
-    console.log(
-      "and now the post for createOrUpdateUserFile endpointUrl: " + endpointUrl
-    );
-    return this.http
-      .post<HttpResponse<any>>(endpointUrl, formData, requestOptions)
-      /*
-        The .pipe() method allows chaining multiple RxJS operators. 
       */
-      .pipe(
-        map((response) => response.status == 201),
-        catchError(() => EMPTY)
-      );
+              // HACK
+
+              catchError(() => EMPTY)
+          );
   }
+  /*
+  concatMap(({ savedMapProject }) => {
+        const secondEndpointUrl = `${this.baseUrl}/upload/${savedMapProject.id}`;
+
+        const contentBlob = new Blob(
+          [JSON.stringify(savedMapProject)], // Use savedMapProject here
+          { type: 'application/json' }
+        );
+
+        const filename = `${savedMapProject.id}.ui`;
+        const formData = new FormData();
+        formData.append('file', contentBlob, filename);
+
+        return this.http.post(
+          secondEndpointUrl,
+          formData,
+          {
+            headers: {
+              'Accept': 'application/vnd.api+json; charset=utf-8'
+            },
+            observe: 'response'
+          }
+        ).pipe(
+          tap((response) => {
+            if (response.status === 201) {
+              console.log('✅ UI file uploaded (201 Created)');
+            } else {
+              console.warn(`⚠️ UI file upload returned: ${response.status}`);
+            }
+          }),
+          mapTo(savedMapProject)
+        );
+      }),
+  */
 
   uploadUserFile(
     mapProjectId: string,

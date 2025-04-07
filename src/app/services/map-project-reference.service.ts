@@ -1,3 +1,5 @@
+// map-project-reference.service.ts
+
 import {Injectable} from "@angular/core";
 import {MapProjectReference} from "../model/intern/map-project-reference";
 import {from, Observable, of, zip} from "rxjs";
@@ -43,9 +45,10 @@ export class MapProjectReferenceService {
                 toArray()
             );
     }
-
+ 
     saveMapProjectReferences(mapProjectReferences: MapProjectReference[]): Observable<boolean> {
         MapProjectReferenceService.checkOrUpdateSchemaVersion();
+        console.log(">>> saveMapProjectReferences in map-project-reference.service.ts mapProjectReferences: " + mapProjectReferences);
         return from(new Promise<boolean>((resolve) => {
             localStorage.setItem(MAP_PROJECT_REFERENCES, JSON.stringify(mapProjectReferences));
             resolve(true);

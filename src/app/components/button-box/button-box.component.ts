@@ -46,7 +46,9 @@ export class ButtonBoxComponent {
         return this.currentMapProject?.state != MapProjectState.READY_FOR_DOWNLOAD;
     }
 
-    createMapProject() {
+    createMapProject() { 
+        // Log the mapProject before dispatching the action
+        console.log('>>> Dispatching createMapProject from createMapProject in button-box.component.ts');
         let name = $localize`New Map Project ${new Date().toLocaleString(this.locale)}`;
         this.store.dispatch(UiActions.createMapProject({name: name}));
     }

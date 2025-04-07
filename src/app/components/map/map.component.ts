@@ -393,6 +393,7 @@ export class MapComponent implements AfterViewInit {
       );
   }
 
+  // called from bindToStore (where listens for changes in currentAdditionalGpxElements)
   private updateGpxTracks(additionalGpxElements: AdditionalGpxElement[]) {
     console.log("+++ updateGpxTracks");
     let gpxElementIdsToRemove = new Set<string>(

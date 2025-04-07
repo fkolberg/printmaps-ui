@@ -24,6 +24,21 @@ const reducer = createReducer(initialState,
             mapProjectReferences: mapProjectReferences
         })),
 
+    /*
+        This part of the code is responsible for creating a new map project 
+        and updating the state with this new project. 
+        It uses default values for many of the mapProject properties 
+        and adds an attribution element to the map.
+
+        The main purpose of this logic is to handle the creation of a new map project 
+        when the UiActions.createMapProject action is dispatched, 
+        and update the application's state with the newly created project details.
+        
+        Returning the Updated State: The function then returns a new state object:
+            The current state is spread (...state), preserving all other parts of the state.
+            The currentMapProject is set to the newly created mapProject object 
+            (with the attribution element added).
+    */
     on(UiActions.createMapProject,
         (state, {name}) => {
             let mapProject = {

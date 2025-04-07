@@ -184,10 +184,34 @@ export class MainEffects {
           : of()
       ),
       filter((mapProject) => mapProject.modifiedLocally),
+      tap((mapProject) => {
+        // Log the mapProject before dispatching the action
+        console.log('>>> Dispatching upload form autoUploadMapProject-effect in main.effects.ts for mapProject:', mapProject);
+      }),
+      /*
       map((mapProject) =>
-        UiActions.uploadMapProject({ mapProject: mapProject })
+        UiActions.uploadMapProject({ mapProject: mapProject }),
       )
-    )
+      */
+      // HACK
+      map((mapProject) => {
+        // Dispatch the first action
+        const uploadAction = UiActions.uploadMapProject({
+          mapProject: mapProject,
+        });
+
+        // Dispatch the second action
+        const anotherAction = UiActions.uploadUserFile({
+          mapProject: mapProject, // or any other data that you'd like to pass
+        });
+
+        // Return both actions as an array
+        return [uploadAction, anotherAction];        
+      }),
+      // Use concatMap to handle multiple dispatches in sequence
+      concatMap((actions) => actions)
+      // HACK  
+      )
   );
 
   refreshMapProjectState = createEffect(() =>
@@ -245,35 +269,13 @@ export class MainEffects {
   // Effect to handle file upload
   uploadUserFile$ = createEffect(() =>
     this.actions.pipe(
-      ofType(UiActions.uploadUserFile),
-      switchMap(({ id, userFile }) => {
-        return this.printmapsService.uuploadUserFile(id, userFile).pipe(
-          map((success) => {
-            if (success) {
-              // Dispatch userFileUploaded action if upload is successful
-              return UiActions.userFileUploaded({ id, userFile });
-            } else {
-              // Dispatch uploadUserFileFailed action if upload fails
-              return UiActions.uploadUserFileFailed({
-                id,
-                userFile,
-                error: 'Upload failed due to unknown error' // You can customize the error message
-              });
-            }
-          }),
-          catchError((error) => {
-            console.error('Error during file upload:', error);
-            return of(
-              UiActions.uploadUserFileFailed({
-                id,
-                userFile,
-                error: error.message || 'Error occurred during upload'
-              })
-            );
-          })
-        );
+      ofType(UiActions.uploadMapProject), 
+      tap((action) => {
+        // Log the mapProject or any other relevant data
+        console.log('!!!!!! uploadUserFile effect triggered for mapProject: ', action.mapProject);
       })
-    )
+    ), { dispatch: false }  // No action is dispatched, only a side effect
   );
+  
   
 }
