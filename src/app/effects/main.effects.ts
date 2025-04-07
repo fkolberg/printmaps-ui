@@ -201,12 +201,21 @@ export class MainEffects {
         });
 
         // Dispatch the second action
-        const anotherAction = UiActions.uploadUserFile({
+        const uploadUserFileAction = UiActions.uploadUserFile({
           mapProject: mapProject, // or any other data that you'd like to pass
         });
 
+        // Dispatch the second action
+        const loadUserFileAction = UiActions.loadUserFile({
+          mapProjectReference: {
+            id: mapProject.id,
+            name: mapProject.name,
+            state: mapProject.state,
+          },
+        });
+
         // Return both actions as an array
-        return [uploadAction, anotherAction];        
+        return [uploadAction, uploadUserFileAction];        
       }),
       // Use concatMap to handle multiple dispatches in sequence
       concatMap((actions) => actions)

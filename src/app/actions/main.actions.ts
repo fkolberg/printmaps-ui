@@ -117,7 +117,7 @@ export function createUploadMapProjectFollowUpAction(followUpAction: UploadMapPr
 
 export const loadUserFile = createAction(
     createActionType(SOURCE, "LOAD_USER_FILE"),
-    props<{ userFile: UserFile }>()
+    props<{ mapProjectReference: MapProjectReference }>()
 );
 
 export const userFileLoaded = createAction(
