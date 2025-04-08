@@ -96,7 +96,7 @@ export const mapProjectUploaded = createAction(
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 export const uploadUserFile = createAction(
     createActionType(SOURCE, "UPLOAD_USER_FILE"),
-    props<{ mapProject: MapProject}>()
+    props<{ mapProject: MapProject }>()
 );
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

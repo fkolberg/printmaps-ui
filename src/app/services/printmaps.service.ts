@@ -1,678 +1,413 @@
+import {HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse} from "@angular/common/http";
+import {Injectable} from "@angular/core";
+import {EMPTY, Observable, of} from "rxjs";
+import {catchError, concatMap, map, mapTo, tap} from "rxjs/operators";
+import {MapRenderingJobDefinition} from "../model/api/map-rendering-job-definition";
+import {MapProject, toMapRenderingJobExecution} from "../model/intern/map-project";
+import {MapRenderingJobState} from "../model/api/map-rendering-job-state";
+import {fromMapRenderingJobState, MapProjectState} from "../model/intern/map-project-state";
+import {MapProjectReference} from "../model/intern/map-project-reference";
+import {ConfigurationService} from "./configuration.service";
+import {fromReductionFactor, getScaleProperties, SCALES} from "../model/intern/scale";
 import {
-  HttpClient,
-  HttpErrorResponse,
-  HttpHeaders,
-  HttpResponse,
-} from "@angular/common/http";
-import { Injectable } from "@angular/core";
-import { EMPTY, Observable, of } from "rxjs";
-import { catchError, concatMap, map, mapTo, tap } from "rxjs/operators";
-import { MapRenderingJobDefinition } from "../model/api/map-rendering-job-definition";
-import {
-  MapProject,
-  toMapRenderingJobExecution,
-} from "../model/intern/map-project";
-import { MapRenderingJobState } from "../model/api/map-rendering-job-state";
-import {
-  fromMapRenderingJobState,
-  MapProjectState,
-} from "../model/intern/map-project-state";
-import { MapProjectReference } from "../model/intern/map-project-reference";
-import { ConfigurationService } from "./configuration.service";
-import {
-  fromReductionFactor,
-  getScaleProperties,
-  SCALES,
-} from "../model/intern/scale";
-import {
-  ADDITIONAL_ELEMENT_TYPES,
-  AdditionalElementType,
-  AdditionalGpxElement,
-  AdditionalScaleElement,
-  AdditionalTextElement,
-  AnyAdditionalElement,
+    ADDITIONAL_ELEMENT_TYPES,
+    AdditionalElementType,
+    AdditionalGpxElement,
+    AdditionalScaleElement,
+    AdditionalTextElement,
+    AnyAdditionalElement
 } from "../model/intern/additional-element";
-import { TemplateService } from "./template-service";
-import { UserObject } from "../model/api/user-object";
-import { UserObjectMetadata } from "../model/api/user-object-metadata";
+import {TemplateService} from "./template-service";
+import {UserObject} from "../model/api/user-object";
+import {UserObjectMetadata} from "../model/api/user-object-metadata";
 import {
-  AdditionalElementStyleType,
-  DEFAULT_SCALE_STYLE,
-  DEFAULT_TEXT_STYLE,
-  DEFAULT_TRACK_STYLE,
-  FONT_STYLE_BY_FONTSET_NAME,
+    AdditionalElementStyleType,
+    DEFAULT_SCALE_STYLE,
+    DEFAULT_TEXT_STYLE,
+    DEFAULT_TRACK_STYLE,
+    FONT_STYLE_BY_FONTSET_NAME
 } from "../model/intern/additional-element-style";
-import { v4 as uuid } from "uuid";
-import { parse } from "wellknown";
-import { UserFile } from "../model/api/user-file";
-import { ScaleService } from "./scale.service";
+import {v4 as uuid} from "uuid";
+import {parse} from "wellknown";
+import {UserFile} from "../model/api/user-file";
+import {ScaleService} from "./scale.service";
 
 const REQUEST_OPTIONS = {
-  headers: new HttpHeaders({
-    Accept: "application/vnd.api+json; charset=utf-8",
-    "Content-Type": "application/vnd.api+json; charset=utf-8",
-  }),
+    headers: new HttpHeaders({
+        "Accept": "application/vnd.api+json; charset=utf-8",
+        "Content-Type": "application/vnd.api+json; charset=utf-8"
+    })
 };
 
 @Injectable()
 export class PrintmapsService {
-  constructor(
-    private readonly configurationService: ConfigurationService,
-    private templateService: TemplateService,
-    private http: HttpClient,
-    private scaleService: ScaleService
-  ) {}
-
-  private get baseUrl() {
-    return this.configurationService.appConf.printmapsApiBaseUri;
-  }
-
-  private static convertUserObjectToAdditionalElement(
-    userObject: UserObject
-  ): AnyAdditionalElement {
-    if (!userObject.Style.match(/^<!--(.*)-->/)) {
-      return undefined;
+    constructor(private readonly configurationService: ConfigurationService, private templateService: TemplateService, private http: HttpClient, private scaleService: ScaleService) {
     }
-    let metadata = JSON.parse(
-      userObject.Style.match(/^<!--(.*)-->/)[1]
-    ) as UserObjectMetadata;
-    if (
-      metadata?.Type == AdditionalElementType.TEXT_BOX ||
-      metadata?.Type == AdditionalElementType.ATTRIBUTION
-    ) {
-      return this.extractTextElement(userObject, metadata);
-    } else if (metadata?.Type == AdditionalElementType.SCALE) {
-      return this.extractScaleElement(userObject, metadata);
-    } else if (metadata?.Type == AdditionalElementType.GPX_TRACK) {
-      return this.extractGpxElement(userObject, metadata);
+
+    private get baseUrl() {
+        return this.configurationService.appConf.printmapsApiBaseUri;
     }
-    return undefined;
-  }
 
-  private static extractTextElement(
-    userObject: UserObject,
-    metadata: UserObjectMetadata
-  ): AdditionalTextElement {
-    let parser = new DOMParser();
-    let styleXml = parser.parseFromString(userObject.Style, "application/xml");
-    let wkt = parse(userObject.WellKnownText);
-    let c_x = 0;
-    let c_y = 0;
-    if (wkt && "coordinates" in wkt) {
-      let c_x = wkt.coordinates[0];
-      let c_y = wkt.coordinates[1];
-    }
-    let textSymbolizerAttributes =
-      styleXml.getElementsByTagName("TextSymbolizer")[0].attributes;
-    return {
-      type: metadata.Type as AdditionalElementType,
-      id: metadata.ID ?? uuid(),
-      text: metadata.Text ?? "",
-      style: {
-        type: AdditionalElementStyleType.TEXT,
-        fontStyle:
-          FONT_STYLE_BY_FONTSET_NAME.get(
-            textSymbolizerAttributes.getNamedItem("fontset-name")?.value
-          ) ?? DEFAULT_TEXT_STYLE.fontStyle,
-        fontSize: parseInt(
-          textSymbolizerAttributes.getNamedItem("size")?.value ??
-            DEFAULT_TEXT_STYLE.fontSize.toString()
-        ),
-        textOrientation: parseInt(
-          textSymbolizerAttributes.getNamedItem("orientation")?.value ??
-            DEFAULT_TEXT_STYLE.textOrientation.toString()
-        ),
-        fontColor: {
-          rgbHexValue:
-            textSymbolizerAttributes.getNamedItem("fill")?.value ??
-            DEFAULT_TEXT_STYLE.fontColor.rgbHexValue,
-          opacity: parseFloat(
-            textSymbolizerAttributes.getNamedItem("opacity")?.value ??
-              DEFAULT_TEXT_STYLE.fontColor.opacity.toString()
-          ),
-        },
-      },
-      location: { x: c_x, y: c_y },
-    };
-  }
-
-  private static extractScaleElement(
-    userObject: UserObject,
-    metadata: UserObjectMetadata
-  ): AdditionalScaleElement {
-    let wkt = parse(userObject.WellKnownText);
-    let c_x = 0;
-    let c_y = 0;
-    if (wkt && "coordinates" in wkt) {
-      let c_x = wkt.coordinates[0];
-      let c_y = wkt.coordinates[1];
-    }
-    return {
-      type: metadata.Type as AdditionalElementType,
-      id: metadata.ID ?? uuid(),
-      style: DEFAULT_SCALE_STYLE,
-      location: { x: c_x, y: c_y },
-    };
-  }
-
-  private static extractGpxElement(
-    userObject: UserObject,
-    metadata: UserObjectMetadata
-  ): AdditionalGpxElement {
-    let parser = new DOMParser();
-    let styleXml = parser.parseFromString(userObject.Style, "application/xml");
-    let lineSymbolizerAttributes =
-      styleXml.getElementsByTagName("LineSymbolizer")[0].attributes;
-
-    console.log("---> extractGpxElement metadata.Data" + metadata.Data);
-    return {
-      type: AdditionalElementType.GPX_TRACK,
-      id: metadata.ID ?? uuid(),
-      style: {
-        type: AdditionalElementStyleType.TRACK,
-        lineWidth: parseFloat(
-          lineSymbolizerAttributes.getNamedItem("stroke-width")?.value ??
-            DEFAULT_TRACK_STYLE.lineWidth.toString()
-        ),
-        lineColor: {
-          rgbHexValue:
-            lineSymbolizerAttributes.getNamedItem("stroke")?.value ??
-            DEFAULT_TRACK_STYLE.lineColor.rgbHexValue,
-          opacity: parseFloat(
-            lineSymbolizerAttributes.getNamedItem("stroke-opacity")?.value ??
-              DEFAULT_TRACK_STYLE.lineColor.opacity.toString()
-          ),
-        },
-        smooth: parseFloat(
-          lineSymbolizerAttributes.getNamedItem("smooth")?.value ??
-            DEFAULT_TRACK_STYLE.smooth.toString()
-        ),
-      },
-      file: {
-        name: metadata.File,
-        //data: undefined,
-        data: metadata.Data, // ?????????????????????????????? !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        modified: new Date().getTime(),
-      },
-    };
-  }
-
-  private static extractMargins(userObject: UserObject): {
-    top: number;
-    bottom: number;
-    left: number;
-    right: number;
-  } {
-    if (!userObject.Style.match(/^<!--(.*)-->/)) {
-      return undefined;
-    }
-    let metadata = JSON.parse(
-      userObject.Style.match(/^<!--(.*)-->/)[1]
-    ) as UserObjectMetadata;
-    if (metadata?.Type == "margins") {
-      let wkt = parse(userObject.WellKnownText);
-      let c_top = 0;
-      let c_bottom = 0;
-      let c_left = 0;
-      let c_right = 0;
-
-      if (wkt && "coordinates" in wkt) {
-        let c_top = wkt.coordinates[0][2][1] - wkt.coordinates[1][2][1];
-        let c_bottom = wkt.coordinates[1][0][1];
-        let c_left = wkt.coordinates[1][0][0];
-        let c_right = wkt.coordinates[0][2][0] - wkt.coordinates[1][2][0];
-      }
-      return {
-        top: c_top,
-        bottom: c_bottom,
-        left: c_left,
-        right: c_right,
-      };
-    }
-    return undefined;
-  }
-
-  loadMapProjectState(id: string): Observable<MapProjectState> {
-    let endpointUrl = `${this.baseUrl}/mapstate/${id}`;
-    return this.http.get<MapRenderingJobState>(endpointUrl).pipe(
-      map(fromMapRenderingJobState),
-      catchError((error: HttpErrorResponse) => {
-        if (error.status == 400) {
-          return of(MapProjectState.NONEXISTENT);
+    private static convertUserObjectToAdditionalElement(userObject: UserObject): AnyAdditionalElement {
+        if (!userObject.Style.match(/^<!--(.*)-->/)) {
+            return undefined;
         }
-        return of(MapProjectState.RENDERING_UNSUCCESSFUL);
-      })
-    );
-  }
+        let metadata = JSON.parse(userObject.Style.match(/^<!--(.*)-->/)[1]) as UserObjectMetadata;
+        if (metadata?.Type == AdditionalElementType.TEXT_BOX || metadata?.Type == AdditionalElementType.ATTRIBUTION) {
+            return this.extractTextElement(userObject, metadata);
+        } else if (metadata?.Type == AdditionalElementType.SCALE) {
+            return this.extractScaleElement(userObject, metadata);
+        } else if (metadata?.Type == AdditionalElementType.GPX_TRACK) {
+            return this.extractGpxElement(userObject, metadata);
+        }
+        return undefined;
+    }
 
-  loadMapProject(
-    mapProjectReference: MapProjectReference
-  ): Observable<MapProject> {
-    let endpointUrl = `${this.baseUrl}/metadata/${mapProjectReference.id}`;
-    return this.http.get<MapRenderingJobDefinition>(endpointUrl).pipe(
-      //tap(mapRenderingJob => console.log('zzzzzzzzzzzzzzzzzzzzzzzz mapRenderingJob: ' + mapRenderingJob)),  // Use tap to log the mapRenderingJob
-      map((mapRenderingJob) =>
-        this.fromMapRenderingJob(mapProjectReference.name, mapRenderingJob)
-      ),
-      concatMap((mapProject) =>
-        this.loadMapProjectState(mapProject.id).pipe(
-          //tap(mapProjectState => console.log('zzzzzzzzzzzzzzzzzzzzzzzz mapProjectState: ' + mapProjectState)),  // Use tap to log the mapRenderingJob
-          map((mapProjectState) => {
-            mapProject.state = mapProjectState;
-            return mapProject;
-          })
-        )
-      ),
-      /*
+    private static extractTextElement(userObject: UserObject, metadata: UserObjectMetadata): AdditionalTextElement {
+        let parser = new DOMParser();
+        let styleXml = parser.parseFromString(userObject.Style, "application/xml");
+        let wkt = parse(userObject.WellKnownText);
+        let c_x = 0;
+        let c_y = 0;
+        if (wkt && 'coordinates' in wkt) {
+            let c_x = wkt.coordinates[0];
+            let c_y = wkt.coordinates[1];
+        }
+        let textSymbolizerAttributes = styleXml.getElementsByTagName("TextSymbolizer")[0].attributes;
+        return {
+            type: metadata.Type as AdditionalElementType,
+            id: metadata.ID ?? uuid(),
+            text: metadata.Text ?? "",
+            style: {
+                type: AdditionalElementStyleType.TEXT,
+                fontStyle: FONT_STYLE_BY_FONTSET_NAME
+                        .get(textSymbolizerAttributes.getNamedItem("fontset-name")?.value) ??
+                    DEFAULT_TEXT_STYLE.fontStyle,
+                fontSize: parseInt(textSymbolizerAttributes.getNamedItem("size")?.value ??
+                    DEFAULT_TEXT_STYLE.fontSize.toString()),
+                textOrientation: parseInt(textSymbolizerAttributes.getNamedItem("orientation")?.value ??
+                    DEFAULT_TEXT_STYLE.textOrientation.toString()),
+                fontColor: {
+                    rgbHexValue: textSymbolizerAttributes.getNamedItem("fill")?.value ??
+                        DEFAULT_TEXT_STYLE.fontColor.rgbHexValue,
+                    opacity: parseFloat(textSymbolizerAttributes.getNamedItem("opacity")?.value ??
+                        DEFAULT_TEXT_STYLE.fontColor.opacity.toString())
+                }
+            },
+            location: {x: c_x, y: c_y}
+        };
+    }
+
+    private static extractScaleElement(userObject: UserObject, metadata: UserObjectMetadata): AdditionalScaleElement {
+        let wkt = parse(userObject.WellKnownText);
+        let c_x = 0;
+        let c_y = 0;
+        if (wkt && 'coordinates' in wkt) {
+            let c_x = wkt.coordinates[0];
+            let c_y = wkt.coordinates[1];
+        }
+        return {
+            type: metadata.Type as AdditionalElementType,
+            id: metadata.ID ?? uuid(),
+            style: DEFAULT_SCALE_STYLE,
+            location: {x: c_x, y: c_y}
+        };
+    }
+
+    private static extractGpxElement(userObject: UserObject, metadata: UserObjectMetadata): AdditionalGpxElement {
+        let parser = new DOMParser();
+        let styleXml = parser.parseFromString(userObject.Style, "application/xml");
+        let lineSymbolizerAttributes = styleXml.getElementsByTagName("LineSymbolizer")[0].attributes;
+        
+        return {
+            type: AdditionalElementType.GPX_TRACK,
+            id: metadata.ID ?? uuid(),
+            style: {
+                type: AdditionalElementStyleType.TRACK,
+                lineWidth: parseFloat(lineSymbolizerAttributes.getNamedItem("stroke-width")?.value
+                    ?? DEFAULT_TRACK_STYLE.lineWidth.toString()),
+                lineColor: {
+                    rgbHexValue: lineSymbolizerAttributes.getNamedItem("stroke")?.value
+                        ?? DEFAULT_TRACK_STYLE.lineColor.rgbHexValue,
+                    opacity: parseFloat(lineSymbolizerAttributes.getNamedItem("stroke-opacity")?.value
+                        ?? DEFAULT_TRACK_STYLE.lineColor.opacity.toString())
+                },
+                smooth: parseFloat(lineSymbolizerAttributes.getNamedItem("smooth")?.value
+                    ?? DEFAULT_TRACK_STYLE.smooth.toString()) 
+            },
+            file: {name: metadata.File, data: undefined, modified: new Date().getTime()}
+        };
+    }
+
+    private static extractMargins(userObject: UserObject): { top: number, bottom: number, left: number, right: number } {
+        if (!userObject.Style.match(/^<!--(.*)-->/)) {
+            return undefined;
+        }
+        let metadata = JSON.parse(userObject.Style.match(/^<!--(.*)-->/)[1]) as UserObjectMetadata;
+        if (metadata?.Type == "margins") {
+            let wkt = parse(userObject.WellKnownText);
+            let c_top = 0;
+            let c_bottom = 0;
+            let c_left = 0;
+            let c_right = 0;
+
+            if (wkt && 'coordinates' in wkt) {
+                let c_top = wkt.coordinates[0][2][1] - wkt.coordinates[1][2][1];
+                let c_bottom = wkt.coordinates[1][0][1];
+                let c_left = wkt.coordinates[1][0][0];
+                let c_right = wkt.coordinates[0][2][0] - wkt.coordinates[1][2][0];
+            }
+            return {
+                top: c_top,
+                bottom: c_bottom,
+                left: c_left,
+                right: c_right
+            };
+        }
+        return undefined;
+    }
+
+    loadMapProjectState(id: string): Observable<MapProjectState> {
+        let endpointUrl = `${this.baseUrl}/mapstate/${id}`;
+        return this.http.get<MapRenderingJobState>(endpointUrl)
+            .pipe(
+                map(fromMapRenderingJobState),
+                catchError((error: HttpErrorResponse) => {
+                    if (error.status == 400) {
+                        return of(MapProjectState.NONEXISTENT);
+                    }
+                    return of(MapProjectState.RENDERING_UNSUCCESSFUL);
+                })
+            );
+    }
+
+    loadMapProject(mapProjectReference: MapProjectReference): Observable<MapProject> {
+        let endpointUrl = `${this.baseUrl}/metadata/${mapProjectReference.id}`;
+        return this.http.get<MapRenderingJobDefinition>(endpointUrl)
+            .pipe(
+                map(mapRenderingJob => this.fromMapRenderingJob(mapProjectReference.name, mapRenderingJob)),
                 concatMap(mapProject =>
-                    this.loadMapProjectData(mapProject.id)
+                    this.loadMapProjectState(mapProject.id)
                         .pipe(
-                            tap(mapProjectState => console.log('loadMapProjectData: ' + mapProjectState)),  // Use tap to log the mapRenderingJob
                             map(mapProjectState => {
                                 mapProject.state = mapProjectState;
                                 return mapProject;
                             })
                         )
                 ),
-                */
-      catchError(() => EMPTY)
-    );
-  }
-
-  deleteMapRenderingJob(id: string): Observable<boolean> {
-    let endpointUrl = `${this.baseUrl}/delete/${id}`;
-    console.log("deleteMapRenderingJob endpointUrl: " + endpointUrl);
-    return this.http.post(endpointUrl, null, REQUEST_OPTIONS).pipe(
-      mapTo(true),
-      catchError(() => of(false))
-    );
-  }
-
-  launchMapRenderingJob(id: string): Observable<boolean> {
-    let endpointUrl = `${this.baseUrl}/mapfile`;
-    console.log("launchMapRenderingJob endpointUrl: " + endpointUrl);
-    return this.http
-      .post(endpointUrl, toMapRenderingJobExecution(id), REQUEST_OPTIONS)
-      .pipe(
-        mapTo(true),
-        catchError(() => of(false))
-      );
-  }
-
-    /*
-        mapProjectId is in data returned by function toMapRenderingJob(...)
-    */
-   /*
-    Input:
-      mapProject: This is the parameter of type MapProject passed into the function. 
-      It represents the map project you are working with.
-    Return type: 
-      The function returns an Observable<MapProject>. 
-      This means that it will emit a MapProject object once the observable completes. 
-      Observables are a way of handling asynchronous operations in Angular (and RxJS).
-   */
-    createOrUpdateMapRenderingJob(mapProject: MapProject): Observable<MapProject> {
-      let endpointUrl = `${this.baseUrl}/metadata${mapProject.id ? "/patch" : ""}`;
-      return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.toMapRenderingJob(mapProject), REQUEST_OPTIONS)
-        /*
-          The .pipe() method is used to chain multiple RxJS operators together. 
-          These operators are used to manipulate or interact with the stream of data 
-          returned by the HTTP request. 
-          
-          Let's go over each operator one by one:
-          mapRenderingJob: The result of the POST request is mapped into a MapRenderingJob 
-          (which is probably returned by the backend).
-          the map operator transforms the response of the HTTP request.
-          this.fromMapRenderingJob(mapProject.name, mapRenderingJob): 
-            This function takes the mapRenderingJob returned from the backend 
-            And probably converts it into a MapProject format 
-            (possibly adding the mapProject.name to the resulting object).
-            The goal here is to take the backend response and return a modified version of it 
-            that fits your application's model for MapProject.
-
-          The tap operator is used to perform side effects without modifying the stream of data. 
-          It's typically used for logging, triggering actions, etc.
-          this.toUserFiles(mapProject): 
-            This function likely takes the mapProject and converts it into an array of user files.
-          this.uploadUserFile(savedMapProject.id, userFile.content, userFile.name).subscribe(): 
-            For each user file, this triggers the file upload by calling the uploadUserFile method 
-            with the file's content and name. 
-            The .subscribe() method triggers the file upload, but using .subscribe() inside tap() 
-            is not ideal as it doesn't manage the asynchronous nature well 
-            (this is a potential issue for improvement, as explained in previous responses).
-
-          This part of the code uploads the user files 
-          but does not wait for the uploads to complete before moving on to the next operation.
-
-          concatMap: 
-            This operator is used to switch to a new observable 
-            and wait for that observable to complete before moving on. 
-            It's particularly useful when you want to make an HTTP request 
-            or do some asynchronous task and wait for it to finish 
-            before continuing with the next part of the flow.
-            Here, it makes a loadMapProjectState(savedMapProject.id) HTTP call 
-            to fetch the current state of the map project 
-            (perhaps some additional metadata or data that the map needs).
-            After the state is loaded, it merges the state into the savedMapProject 
-            by using the map operator to create a new object. 
-            This new object contains both the savedMapProject and its state as a property.
-        */  
-        .pipe(
-              map(mapRenderingJob => this.fromMapRenderingJob(mapProject.name, mapRenderingJob)),
-              tap(savedMapProject =>
-                  this.toUserFiles(mapProject).forEach(userFile =>
-                      this.uploadUserFile(savedMapProject.id, userFile.content, userFile.name).subscribe())),
-              concatMap(savedMapProject =>
-                  this.loadMapProjectState(savedMapProject.id)
-                      .pipe(
-                          map(mapProjectState => ({
-                                  ...savedMapProject,
-                                  //savedMapProject,
-                                  state: mapProjectState
-                              }),                                                  
-                          )
-                      )
-              ),
-              // HACK
-              tap(() => {
-                console.log(">>> blaaaaaaaaa All files uploaded for Map Project ID:");
-              }),   
-              
-              // HACK
-               // Step 4: Make another HTTP POST request to upload the file
-               /*
-      concatMap(({ savedMapProject, state }) => {
-        const secondEndpointUrl = `${this.baseUrl}/upload/${savedMapProject.id}`;
-
-        const contentBlob = new Blob([JSON.stringify(savedMapProject)], { type: 'application/json' });
-        const filename = `${savedMapProject.id}.ui`;
-        const formData = new FormData();
-        formData.append('file', contentBlob, filename);
-
-        // Perform the second HTTP POST to upload the file
-        return this.http.post(secondEndpointUrl, formData, {
-          headers: {
-            'Accept': 'application/vnd.api+json; charset=utf-8'
-          },
-          observe: 'response'
-        }).pipe(
-          tap((response) => {
-            if (response.status === 201) {
-              console.log('✅ UI file uploaded (201 Created)');
-            } else {
-              console.warn(`⚠️ UI file upload returned: ${response.status}`);
-            }
-          }),
-          // Return the savedMapProject after the upload is complete
-          mapTo(savedMapProject)
-        );
-      }),
-      */
-              // HACK
-
-              catchError(() => EMPTY)
-          );
-  }
-  /*
-  concatMap(({ savedMapProject }) => {
-        const secondEndpointUrl = `${this.baseUrl}/upload/${savedMapProject.id}`;
-
-        const contentBlob = new Blob(
-          [JSON.stringify(savedMapProject)], // Use savedMapProject here
-          { type: 'application/json' }
-        );
-
-        const filename = `${savedMapProject.id}.ui`;
-        const formData = new FormData();
-        formData.append('file', contentBlob, filename);
-
-        return this.http.post(
-          secondEndpointUrl,
-          formData,
-          {
-            headers: {
-              'Accept': 'application/vnd.api+json; charset=utf-8'
-            },
-            observe: 'response'
-          }
-        ).pipe(
-          tap((response) => {
-            if (response.status === 201) {
-              console.log('✅ UI file uploaded (201 Created)');
-            } else {
-              console.warn(`⚠️ UI file upload returned: ${response.status}`);
-            }
-          }),
-          mapTo(savedMapProject)
-        );
-      }),
-  */
-
-  uploadUserFile(
-    mapProjectId: string,
-    content: string | Blob,
-    name: string
-  ): Observable<boolean> {
-    // Create a Blob from the content
-    const blob = new Blob([content], { type: "text/plain" });
-
-    // Read the Blob content as text and log it
-    blob
-      .text()
-      .then((text) => {
-        console.log(
-          `************************************************************************`
-        );
-        console.log(
-          `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz uploadUserFile: ${text}`
-        );
-        console.log(
-          `************************************************************************`
-        );
-      })
-      .catch((err) => {
-        console.error("Error reading the Blob content", err);
-      });
-
-    let formData = new FormData();
-    formData.append(
-      "file",
-      new Blob([content], { type: "image/svg+xml" }),
-      name
-    );
-    let endpointUrl = `${this.baseUrl}/upload/${mapProjectId}`;
-
-    let requestOptions = {
-      headers: new HttpHeaders({
-        Accept: "application/vnd.api+json; charset=utf-8",
-      }),
-    };
-
-    console.log("uploadUserFile endpointUrl: " + endpointUrl);
-    return this.http
-      .post<HttpResponse<any>>(endpointUrl, formData, requestOptions)
-      .pipe(
-        map((response) => response.status == 201),
-        catchError(() => EMPTY)
-      );
-  }
-
-  private static generateMargins(mapProject: MapProject): UserObject {
-    let metadata: UserObjectMetadata = {
-      ID: uuid(),
-      Type: "margins",
-      Text: undefined,
-    };
-    let outerWidth = mapProject.widthInMm;
-    let outerHeight = mapProject.heightInMm;
-    let innerWidth1 = mapProject.leftMarginInMm;
-    let innerWidth2 = mapProject.widthInMm - mapProject.rightMarginInMm;
-    let innerHeight1 = mapProject.bottomMarginInMm;
-    let innerHeight2 = mapProject.heightInMm - mapProject.topMarginInMm;
-    return {
-      Style: `<!--${JSON.stringify(
-        metadata
-      )}--><PolygonSymbolizer fill='white' fill-opacity='1.0' />`,
-      WellKnownText: `POLYGON((0 0, 0 ${outerHeight}, ${outerWidth} ${outerHeight}, ${outerWidth} 0, 0 0), (${innerWidth1} ${innerHeight1}, ${innerWidth1} ${innerHeight2}, ${innerWidth2} ${innerHeight2}, ${innerWidth2} ${innerHeight1}, ${innerWidth1} ${innerHeight1}))`,
-    };
-  }
-
-  private fromMapRenderingJob(
-    name: string,
-    mapRenderingJob: MapRenderingJobDefinition
-  ): MapProject {
-    let data = mapRenderingJob.Data;
-    let attributes = data.Attributes;
-    let margins = mapRenderingJob.Data.Attributes.UserObjects.map(
-      (userObject) => PrintmapsService.extractMargins(userObject)
-    ).filter((element) => !!element)[0];
-    return {
-      id: data.ID,
-      name: name,
-      state: undefined,
-      scale: fromReductionFactor(attributes.Scale),
-      center: {
-        latitude: attributes.Latitude,
-        longitude: attributes.Longitude,
-      },
-      widthInMm: attributes.PrintWidth,
-      heightInMm: attributes.PrintHeight,
-      topMarginInMm: margins?.top ?? 8,
-      bottomMarginInMm: margins?.bottom ?? 8,
-      leftMarginInMm: margins?.left ?? 8,
-      rightMarginInMm: margins?.right ?? 8,
-      options: {
-        fileFormat: attributes.Fileformat,
-        mapStyle: attributes.Style,
-      },
-      additionalElements: mapRenderingJob.Data.Attributes.UserObjects.map(
-        (userObject) =>
-          PrintmapsService.convertUserObjectToAdditionalElement(userObject)
-      ).filter((additionalElement) => !!additionalElement),
-      modifiedLocally: false,
-    };
-  }
-
-  private toMapRenderingJob(mapProject: MapProject): MapRenderingJobDefinition {
-    let gpxTracks = mapProject.additionalElements
-      .filter((element) => element.type == AdditionalElementType.GPX_TRACK)
-      .map((element) =>
-        ADDITIONAL_ELEMENT_TYPES.get(element.type).toUserObject(
-          this.templateService,
-          mapProject,
-          element
-        )
-      );
-    let otherAdditionalElementUserObjects = mapProject.additionalElements
-      .filter((element) => element.type != AdditionalElementType.GPX_TRACK)
-      .map((element) =>
-        ADDITIONAL_ELEMENT_TYPES.get(element.type).toUserObject(
-          this.templateService,
-          mapProject,
-          element
-        )
-      );
-    let userObject = [
-      ...gpxTracks,
-      PrintmapsService.generateMargins(mapProject),
-      ...otherAdditionalElementUserObjects,
-    ];
-    return {
-      Data: {
-        Type: "maps",
-        ID: mapProject.id,
-        Attributes: {
-          Fileformat: mapProject.options.fileFormat,
-          Style: mapProject.options.mapStyle,
-          Projection: "3857",
-          Scale: getScaleProperties(mapProject.scale).reductionFactor,
-          Latitude: mapProject.center.latitude,
-          Longitude: mapProject.center.longitude,
-          PrintWidth: mapProject.widthInMm,
-          PrintHeight: mapProject.heightInMm,
-          HideLayers: "",
-          UserObjects: userObject, // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        },
-      },
-    };
-  }
-
-  private toUserFiles(mapProject: MapProject): UserFile[] {
-    console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz toUserFiles `);
-    let reductionFactor = SCALES.get(mapProject.scale).reductionFactor;
-    let scaleRatio =
-      Math.pow(10, Math.ceil(Math.log10(10 * reductionFactor))) /
-      reductionFactor;
-    let unitLengthInM;
-    if (scaleRatio >= 30) {
-      unitLengthInM = (scaleRatio * reductionFactor) / 4000;
-    } else if (scaleRatio >= 15) {
-      unitLengthInM = (scaleRatio * reductionFactor) / 2000;
-    } else {
-      unitLengthInM = (scaleRatio * reductionFactor) / 1000;
+                catchError(() => EMPTY)
+            );
     }
-    return mapProject.additionalElements
-      .filter(
-        (addAdditionalElement) =>
-          addAdditionalElement.type == AdditionalElementType.SCALE
-      )
-      .map((element) => ({
-        name: `scale_${element.id}.svg`,
-        content: this.scaleService.buildScaleSvg(
-          unitLengthInM,
-          SCALES.get(mapProject.scale).reductionFactor
-        ),
-      }))
-      .concat(
-        mapProject.additionalElements
-          .filter(
-            (addAdditionalElement) =>
-              addAdditionalElement.type == AdditionalElementType.GPX_TRACK
-          )
-          .map((element) => element as AdditionalGpxElement)
-          .filter((element) => element.file?.data)
-          .map((element) => ({
-            name: element.file.name,
-            content: element.file.data,
-          }))
-      );
-  }
 
+    deleteMapRenderingJob(id: string): Observable<boolean> {
+        let endpointUrl = `${this.baseUrl}/delete/${id}`;
+        return this.http.post(endpointUrl, null, REQUEST_OPTIONS)
+            .pipe(
+                mapTo(true),
+                catchError(() => of(false))
+            );
+    }
 
+    launchMapRenderingJob(id: string): Observable<boolean> {
+        let endpointUrl = `${this.baseUrl}/mapfile`;
+        return this.http.post(endpointUrl, toMapRenderingJobExecution(id), REQUEST_OPTIONS)
+            .pipe(
+                mapTo(true),
+                catchError(() => of(false))
+            );
 
-  // Method to upload a user file
-  uuploadUserFile(mapProjectId: string, userFile: UserFile): Observable<boolean> {
-    // If the content is a string, convert it into a Blob
-    const contentBlob =
-      userFile.content instanceof Blob
-        ? userFile.content
-        : new Blob([userFile.content], { type: 'text/plain' });
+    }
 
-    // Create a FormData object and append the file content
-    const formData = new FormData();
-    formData.append('file', contentBlob, userFile.name);
+    createOrUpdateMapRenderingJob(mapProject: MapProject): Observable<MapProject> {
+        let endpointUrl = `${this.baseUrl}/metadata${mapProject.id ? "/patch" : ""}`;
+        return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.toMapRenderingJob(mapProject), REQUEST_OPTIONS)
+            .pipe(
+                map(mapRenderingJob => this.fromMapRenderingJob(mapProject.name, mapRenderingJob)),
+                tap(savedMapProject =>
+                    this.toUserFiles(mapProject).forEach(userFile =>
+                        this.uploadUserFile(savedMapProject.id, userFile.content, userFile.name).subscribe())),
+                concatMap(savedMapProject =>
+                    this.loadMapProjectState(savedMapProject.id)
+                        .pipe(
+                            map(mapProjectState => ({
+                                    ...savedMapProject,
+                                    state: mapProjectState
+                                })
+                            )
+                        )
+                ),
+                // HACK
+                concatMap(savedMapProjectWithState => {
+                    if (true) {  // Condition here
+                        // After loading the map state, we now upload the file
+                        const secondEndpointUrl = `${this.baseUrl}/upload/${savedMapProjectWithState.id}`;
+                
+                        const contentBlob = new Blob(
+                            [JSON.stringify(savedMapProjectWithState)],  // Use the savedMapProjectWithState here
+                            { type: 'application/json' }
+                        );
+                
+                        const filename = `${savedMapProjectWithState.id}.ui`;
+                        const formData = new FormData();
+                        formData.append('file', contentBlob, filename);
+                
+                        return this.http.post(
+                            secondEndpointUrl,
+                            formData,
+                            {
+                                headers: {
+                                    'Accept': 'application/vnd.api+json; charset=utf-8'
+                                },
+                                observe: 'response'
+                            }
+                        ).pipe(
+                            tap((response) => {
+                                if (response.status === 201) {
+                                    console.log('✅ UI file uploaded (201 Created)');
+                                } else {
+                                    console.warn(`⚠️ UI file upload returned: ${response.status}`);
+                                }
+                            }),
+                            mapTo(savedMapProjectWithState),  // Return the savedMapProjectWithState to continue the flow
+                            catchError(error => {
+                                console.error('Error uploading UI file:', error);
+                                return of(savedMapProjectWithState);  // Return the original value to continue the flow
+                            })
+                        );
+                    } else {
+                        return of(savedMapProjectWithState);  // If the condition is false, just return the savedMapProjectWithState
+                    }
+                }),
+                
+                // HACK
+                catchError(() => EMPTY)
+            );
+    }
 
-    // Define the endpoint URL
-    //const endpointUrl = `${this.baseUrl}/upload`;
-    let endpointUrl = `${this.baseUrl}/upload/${mapProjectId}.ui`;
+    uploadUserFile(mapProjectId: string, content: string | Blob, name: string): Observable<boolean> {
+        let formData = new FormData();
+        formData.append("file", new Blob([content], {type: "image/svg+xml"}), name);
+        let endpointUrl = `${this.baseUrl}/upload/${mapProjectId}`;
+        let requestOptions = {
+            headers: new HttpHeaders({
+                "Accept": "application/vnd.api+json; charset=utf-8"
+            })
+        };
 
-    // Define the request options (you can add more headers if needed)
-    const requestOptions = {
-      headers: new HttpHeaders({
-        'Accept': 'application/json',
-      }),
-    };
+        return this.http.post<HttpResponse<any>>(endpointUrl, formData, requestOptions)
+            .pipe(
+                map(response => response.status == 201),
+                catchError(() => EMPTY)
+            );
+    }
 
-    // Make the HTTP POST request to upload the file
-    return this.http.post<HttpResponse<any>>(endpointUrl, formData, requestOptions).pipe(
-      map((response) => response.status === 201), // Return true if status is 201 (created)
-      catchError((error) => {
-        console.error('File upload failed:', error);
-        return [false]; // Return false if upload fails
-      })
-    );
-  }
+    private static generateMargins(mapProject: MapProject): UserObject {
+        let metadata: UserObjectMetadata = {
+            ID: uuid(),
+            Type: "margins",
+            Text: undefined
+        };
+        let outerWidth = mapProject.widthInMm;
+        let outerHeight = mapProject.heightInMm;
+        let innerWidth1 = mapProject.leftMarginInMm;
+        let innerWidth2 = mapProject.widthInMm - mapProject.rightMarginInMm;
+        let innerHeight1 = mapProject.bottomMarginInMm;
+        let innerHeight2 = mapProject.heightInMm - mapProject.topMarginInMm;
+        return {
+            Style: `<!--${JSON.stringify(metadata)}--><PolygonSymbolizer fill='white' fill-opacity='1.0' />`,
+            WellKnownText: `POLYGON((0 0, 0 ${outerHeight}, ${outerWidth} ${outerHeight}, ${outerWidth} 0, 0 0), (${innerWidth1} ${innerHeight1}, ${innerWidth1} ${innerHeight2}, ${innerWidth2} ${innerHeight2}, ${innerWidth2} ${innerHeight1}, ${innerWidth1} ${innerHeight1}))`
+        };
+    }
 
+    private fromMapRenderingJob(name: string, mapRenderingJob: MapRenderingJobDefinition): MapProject {
+        let data = mapRenderingJob.Data;
+        let attributes = data.Attributes;
+        let margins = mapRenderingJob.Data.Attributes.UserObjects
+            .map(userObject => PrintmapsService.extractMargins(userObject))
+            .filter(element => !!element)[0];
+        return {
+            id: data.ID,
+            name: name,
+            state: undefined,
+            scale: fromReductionFactor(attributes.Scale),
+            center: {latitude: attributes.Latitude, longitude: attributes.Longitude},
+            widthInMm: attributes.PrintWidth,
+            heightInMm: attributes.PrintHeight,
+            topMarginInMm: margins?.top ?? 8,
+            bottomMarginInMm: margins?.bottom ?? 8,
+            leftMarginInMm: margins?.left ?? 8,
+            rightMarginInMm: margins?.right ?? 8,
+            options: {
+                fileFormat: attributes.Fileformat,
+                mapStyle: attributes.Style
+            },
+            additionalElements: mapRenderingJob.Data.Attributes.UserObjects
+                .map(userObject => PrintmapsService.convertUserObjectToAdditionalElement(userObject))
+                .filter(additionalElement => !!additionalElement),
+            modifiedLocally: false
+        };
+    }
 
+    private toMapRenderingJob(mapProject: MapProject): MapRenderingJobDefinition {
+        let gpxTracks = mapProject.additionalElements
+            .filter(element => element.type == AdditionalElementType.GPX_TRACK)
+            .map(element => ADDITIONAL_ELEMENT_TYPES.get(element.type)
+                .toUserObject(this.templateService, mapProject, element));
+        let otherAdditionalElementUserObjects = mapProject.additionalElements
+            .filter(element => element.type != AdditionalElementType.GPX_TRACK)
+            .map(element => ADDITIONAL_ELEMENT_TYPES.get(element.type)
+                .toUserObject(this.templateService, mapProject, element));
+        let userObject = [
+            ...gpxTracks,
+            PrintmapsService.generateMargins(mapProject),
+            ...otherAdditionalElementUserObjects
+        ];
+        return {
+            Data: {
+                Type: "maps",
+                ID: mapProject.id,
+                Attributes: {
+                    Fileformat: mapProject.options.fileFormat,
+                    Style: mapProject.options.mapStyle,
+                    Projection: "3857",
+                    Scale: getScaleProperties(mapProject.scale).reductionFactor,
+                    Latitude: mapProject.center.latitude,
+                    Longitude: mapProject.center.longitude,
+                    PrintWidth: mapProject.widthInMm,
+                    PrintHeight: mapProject.heightInMm,
+                    HideLayers: "",
+                    UserObjects: userObject
+                }
+            }
+        };
+    }
 
+    private toUserFiles(mapProject: MapProject): UserFile[] {
+        let reductionFactor = SCALES.get(mapProject.scale).reductionFactor;
+        let scaleRatio = Math.pow(10, Math.ceil(Math.log10(10 * reductionFactor))) / reductionFactor;
+        let unitLengthInM;
+        if (scaleRatio >= 30) {
+            unitLengthInM = scaleRatio * reductionFactor / 4000;
+        } else if (scaleRatio >= 15) {
+            unitLengthInM = scaleRatio * reductionFactor / 2000;
+        } else {
+            unitLengthInM = scaleRatio * reductionFactor / 1000;
+        }
+        return mapProject.additionalElements
+            .filter(addAdditionalElement => addAdditionalElement.type == AdditionalElementType.SCALE)
+            .map(element => ({
+                name: `scale_${element.id}.svg`,
+                content: this.scaleService.buildScaleSvg(unitLengthInM, SCALES.get(mapProject.scale).reductionFactor)
+            }))
+            .concat(
+                mapProject.additionalElements
+                    .filter(addAdditionalElement => addAdditionalElement.type == AdditionalElementType.GPX_TRACK)
+                    .map(element => element as AdditionalGpxElement)
+                    .filter(element => element.file?.data)
+                    .map(element => ({
+                        name: element.file.name,
+                        content: element.file.data
+                    }))
+            );
+    }
 }
