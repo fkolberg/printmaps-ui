@@ -395,7 +395,9 @@ export class MapComponent implements AfterViewInit {
 
   // called from bindToStore (where listens for changes in currentAdditionalGpxElements)
   private updateGpxTracks(additionalGpxElements: AdditionalGpxElement[]) {
-    console.log("+++ updateGpxTracks");
+    console.log("+++ updateGpxTracks for " + additionalGpxElements.length  + "tracks");
+    console.log(`+++ updateGpxTracks for ${additionalGpxElements.length} tracks`);
+
     let gpxElementIdsToRemove = new Set<string>(
       this.gpxTrackHandlerByElementId.keys()
     );

@@ -135,7 +135,9 @@ export class PrintmapsService {
                 smooth: parseFloat(lineSymbolizerAttributes.getNamedItem("smooth")?.value
                     ?? DEFAULT_TRACK_STYLE.smooth.toString()) 
             },
-            file: {name: metadata.File, data: undefined, modified: new Date().getTime()}
+            // ?????????????????????????????? !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //file: {name: metadata.File, data: undefined, modified: new Date().getTime()}
+            file: {name: metadata.File, data: metadata.Data, modified: new Date().getTime()}
         };
     }
 
@@ -188,6 +190,89 @@ export class PrintmapsService {
                 map(mapRenderingJob => this.fromMapRenderingJob(mapProjectReference.name, mapRenderingJob)),
                 concatMap(mapProject =>
                     this.loadMapProjectState(mapProject.id)
+                        .pipe(                            
+                            map(mapProjectState => {
+                                mapProject.state = mapProjectState;
+                                return mapProject;
+                            })
+                        )
+                ),
+                catchError(() => EMPTY)
+            );
+    }
+
+    loadMapProject__(mapProjectReference: MapProjectReference): Observable<MapProject> {
+        let endpointUrl = `${this.baseUrl}/uidata/${mapProjectReference.id}`;
+        return this.http.get(endpointUrl, { responseType: 'blob' })  // Expecting the response as a blob (binary data)
+            .pipe(
+                // Log the response from the first HTTP request
+                tap((responseBlob) => {
+                    console.log('>>> Fetched MapRenderingJob from uidata endpoint:', responseBlob);
+                }),
+                concatMap((responseBlob) => this.handleResponse(responseBlob, mapProjectReference.name)),  // Handle response (binary or JSON)
+                catchError(() => EMPTY)
+            );
+    }
+    
+    // A helper method to handle both types of responses similarly
+    handleResponse(responseBlob: Blob, mapProjectName: string): Observable<MapProject> {
+        return new Observable((observer) => {
+            // Convert the blob to text (assumes it might be a JSON string)
+            const reader = new FileReader();
+            
+            reader.onloadend = () => {
+                const responseText = reader.result as string;
+    
+                try {
+                    let mapRenderingJob: MapRenderingJobDefinition;
+    
+                    // Try to parse the response as JSON
+                    mapRenderingJob = JSON.parse(responseText);
+    
+                    // If it's valid JSON, proceed as normal
+                    const mapProject = this.fromMapRenderingJob(mapProjectName, mapRenderingJob);
+    
+                    // Now load the map project state (same as before)
+                    this.loadMapProjectState(mapProject.id).pipe(
+                        map(mapProjectState => {
+                            mapProject.state = mapProjectState;
+                            observer.next(mapProject);
+                            observer.complete();
+                        }),
+                        catchError(() => {
+                            observer.next(mapProject);  // Proceed even on error
+                            observer.complete();
+                            return EMPTY;
+                        })
+                    ).subscribe();
+                } catch (error) {
+                    console.error('Failed to parse response as JSON:', error);
+                    observer.error(error);
+                }
+            };
+            
+            reader.onerror = (error) => {
+                console.error('Error reading the blob:', error);
+                observer.error(error);
+            };
+            
+            // Read the blob as text (assuming the server returns JSON as text)
+            reader.readAsText(responseBlob);
+        });
+    }
+    
+
+    loadMapProject_(mapProjectReference: MapProjectReference): Observable<MapProject> {
+        let endpointUrl = `${this.baseUrl}/uidata/${mapProjectReference.id}`;
+        return this.http.get<MapRenderingJobDefinition>(endpointUrl)
+            .pipe(
+                // Log the response from the first HTTP request
+                tap((mapRenderingJob) => {
+                    console.log('>>> Fetched MapRenderingJob from uidata endpoint:', mapRenderingJob);
+                }),
+                map(mapRenderingJob => this.fromMapRenderingJob(mapProjectReference.name, mapRenderingJob)),
+                concatMap(mapProject =>
+                    this.loadMapProjectState(mapProject.id)
                         .pipe(
                             map(mapProjectState => {
                                 mapProject.state = mapProjectState;
@@ -236,21 +321,52 @@ export class PrintmapsService {
                             )
                         )
                 ),
-                // HACK
+                catchError(() => EMPTY)
+            );
+    }
+
+    createOrUpdateMapRenderingJob_hack(mapProject: MapProject): Observable<MapProject> {
+        let endpointUrl = `${this.baseUrl}/metadata${mapProject.id ? "/patch" : ""}`;
+    
+        return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.toMapRenderingJob(mapProject), REQUEST_OPTIONS)
+            .pipe(
+                map(mapRenderingJob => this.fromMapRenderingJob(mapProject.name, mapRenderingJob)),
+                tap(savedMapProject =>
+                    this.toUserFiles(mapProject).forEach(userFile =>
+                        this.uploadUserFile(savedMapProject.id, userFile.content, userFile.name).subscribe())),
+                concatMap(savedMapProject =>
+                    this.loadMapProjectState(savedMapProject.id)
+                        .pipe(
+                            map(mapProjectState => ({
+                                ...savedMapProject,
+                                state: mapProjectState
+                            }))
+                        )
+                ),
+                // After loading the map state, upload the UI file with map data
                 concatMap(savedMapProjectWithState => {
-                    if (true) {  // Condition here
-                        // After loading the map state, we now upload the file
-                        const secondEndpointUrl = `${this.baseUrl}/upload/${savedMapProjectWithState.id}`;
-                
+                    if (true) {  // Your condition here (modify as needed)
+                        // Create an updated mapProject object with the new ID
+                        const updatedMapProject = { 
+                            ...mapProject,  // Copy existing mapProject properties
+                            id: savedMapProjectWithState.id  // Update with the ID from the first POST request
+                        };
+    
+                        console.log(">>> updated mapProject.id: " + updatedMapProject.id); // Now the ID will be correct
+                        console.log(">>> savedMapProjectWithState.id: " + savedMapProjectWithState.id);
+    
+                        // Create the contentBlob using the updated mapProject with the new ID
                         const contentBlob = new Blob(
-                            [JSON.stringify(savedMapProjectWithState)],  // Use the savedMapProjectWithState here
+                            [JSON.stringify(this.toMapRenderingJob(updatedMapProject))],  // Use updated mapProject
                             { type: 'application/json' }
                         );
-                
+    
                         const filename = `${savedMapProjectWithState.id}.ui`;
                         const formData = new FormData();
                         formData.append('file', contentBlob, filename);
-                
+    
+                        // Second POST request to upload the UI file
+                        const secondEndpointUrl = `${this.baseUrl}/upload/${savedMapProjectWithState.id}`;
                         return this.http.post(
                             secondEndpointUrl,
                             formData,
@@ -258,31 +374,40 @@ export class PrintmapsService {
                                 headers: {
                                     'Accept': 'application/vnd.api+json; charset=utf-8'
                                 },
-                                observe: 'response'
+                                observe: 'response'  // Make sure to observe the full response
                             }
                         ).pipe(
                             tap((response) => {
+                                console.log('Response:', response);  // Log the full response object
                                 if (response.status === 201) {
                                     console.log('✅ UI file uploaded (201 Created)');
                                 } else {
                                     console.warn(`⚠️ UI file upload returned: ${response.status}`);
                                 }
                             }),
-                            mapTo(savedMapProjectWithState),  // Return the savedMapProjectWithState to continue the flow
+                            mapTo(savedMapProjectWithState),  // Continue with savedMapProjectWithState
+                            
                             catchError(error => {
-                                console.error('Error uploading UI file:', error);
-                                return of(savedMapProjectWithState);  // Return the original value to continue the flow
+                                // console.error('Error uploading UI file:', error);  // Log the error
+                                // Ensure that you only return savedMapProjectWithState on actual errors
+                                return of(savedMapProjectWithState);  // Continue with the flow even on error
                             })
                         );
                     } else {
                         return of(savedMapProjectWithState);  // If the condition is false, just return the savedMapProjectWithState
                     }
                 }),
-                
-                // HACK
-                catchError(() => EMPTY)
+                // Catch any errors and prevent the observable from crashing
+                catchError(error => {
+                    console.error('Error in map rendering job process:', error);  // Log any other errors in the entire process
+                    return EMPTY;  // End the observable chain if there's a general error
+                })
             );
     }
+    
+    
+    
+    
 
     uploadUserFile(mapProjectId: string, content: string | Blob, name: string): Observable<boolean> {
         let formData = new FormData();
