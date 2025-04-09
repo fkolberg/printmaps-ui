@@ -211,7 +211,8 @@ export class PrintmapsService {
                         console.log('>>> Fetched MapRenderingJob from uidata endpoint:', responseBlob);
                     }),
                     concatMap((responseBlob) => this.handleResponse(responseBlob, mapProjectReference.name)),  // Handle response (binary or JSON)
-                    //catchError(() => EMPTY)
+                    //catchError(() => EMPTY) 
+                    // fallback to original code
                     catchError(() => {
                         console.log('>>> Failed to fetch from uidata, falling back to original logic');
                         
@@ -285,29 +286,6 @@ export class PrintmapsService {
             // Read the blob as text (assuming the server returns JSON as text)
             reader.readAsText(responseBlob);
         });
-    }
-    
-
-    loadMapProject_(mapProjectReference: MapProjectReference): Observable<MapProject> {
-        let endpointUrl = `${this.baseUrl}/uidata/${mapProjectReference.id}`;
-        return this.http.get<MapRenderingJobDefinition>(endpointUrl)
-            .pipe(
-                // Log the response from the first HTTP request
-                tap((mapRenderingJob) => {
-                    console.log('>>> Fetched MapRenderingJob from uidata endpoint:', mapRenderingJob);
-                }),
-                map(mapRenderingJob => this.fromMapRenderingJob(mapProjectReference.name, mapRenderingJob)),
-                concatMap(mapProject =>
-                    this.loadMapProjectState(mapProject.id)
-                        .pipe(
-                            map(mapProjectState => {
-                                mapProject.state = mapProjectState;
-                                return mapProject;
-                            })
-                        )
-                ),
-                catchError(() => EMPTY)
-            );
     }
 
     deleteMapRenderingJob(id: string): Observable<boolean> {
