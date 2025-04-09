@@ -184,25 +184,26 @@ export class PrintmapsService {
     }
 
     loadMapProject(mapProjectReference: MapProjectReference): Observable<MapProject> {
-        let endpointUrl = `${this.baseUrl}/metadata/${mapProjectReference.id}`;
-        return this.http.get<MapRenderingJobDefinition>(endpointUrl)
-            .pipe(
-                map(mapRenderingJob => this.fromMapRenderingJob(mapProjectReference.name, mapRenderingJob)),
-                concatMap(mapProject =>
-                    this.loadMapProjectState(mapProject.id)
-                        .pipe(                            
-                            map(mapProjectState => {
-                                mapProject.state = mapProjectState;
-                                return mapProject;
-                            })
-                        )
-                ),
-                catchError(() => EMPTY)
-            );
-    }
-
-    loadMapProject_HACK(mapProjectReference: MapProjectReference): Observable<MapProject> {
-        let endpointUrl = `${this.baseUrl}/uidata/${mapProjectReference.id}`;
+        if (true) {
+            // original
+            let endpointUrl = `${this.baseUrl}/metadata/${mapProjectReference.id}`;
+            return this.http.get<MapRenderingJobDefinition>(endpointUrl)
+                .pipe(
+                    map(mapRenderingJob => this.fromMapRenderingJob(mapProjectReference.name, mapRenderingJob)),
+                    concatMap(mapProject =>
+                        this.loadMapProjectState(mapProject.id)
+                            .pipe(                            
+                                map(mapProjectState => {
+                                    mapProject.state = mapProjectState;
+                                    return mapProject;
+                                })
+                            )
+                    ),
+                    catchError(() => EMPTY)
+                );
+        } else {
+            // HACK
+            let endpointUrl = `${this.baseUrl}/uidata/${mapProjectReference.id}`;
         return this.http.get(endpointUrl, { responseType: 'blob' })  // Expecting the response as a blob (binary data)
             .pipe(
                 // Log the response from the first HTTP request
@@ -212,8 +213,10 @@ export class PrintmapsService {
                 concatMap((responseBlob) => this.handleResponse(responseBlob, mapProjectReference.name)),  // Handle response (binary or JSON)
                 catchError(() => EMPTY)
             );
-    }
+        }
+    }            
     
+    // HACK
     // A helper method to handle both types of responses similarly
     handleResponse(responseBlob: Blob, mapProjectName: string): Observable<MapProject> {
         return new Observable((observer) => {
@@ -383,14 +386,16 @@ export class PrintmapsService {
                             tap((response) => {
                                 console.log('Response:', response);  // Log the full response object
                                 if (response.status === 201) {
-                                    console.log('✅ UI file uploaded (201 Created)');
+                                    console.log('UI file uploaded (201 Created)');
                                 } else {
-                                    console.warn(`⚠️ UI file upload returned: ${response.status}`);
+                                    console.warn(`UI file upload returned: ${response.status}`);
                                 }
                             }),
                             mapTo(savedMapProjectWithState),  // Continue with savedMapProjectWithState
                             
                             catchError(error => {
+                                // TODO FIXME 
+                                // why coming to this catch ???
                                 // console.error('Error uploading UI file:', error);  // Log the error
                                 // Ensure that you only return savedMapProjectWithState on actual errors
                                 return of(savedMapProjectWithState);  // Continue with the flow even on error
