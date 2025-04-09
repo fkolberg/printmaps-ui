@@ -1,3 +1,5 @@
+// printmapsUiReducer.service.ts
+
 import {HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse} from "@angular/common/http";
 import {Injectable} from "@angular/core";
 import {EMPTY, Observable, of} from "rxjs";
@@ -31,6 +33,8 @@ import {v4 as uuid} from "uuid";
 import {parse} from "wellknown";
 import {UserFile} from "../model/api/user-file";
 import {ScaleService} from "./scale.service";
+
+import {Logger, LogLevel} from "../utils/logger.util";
 
 const REQUEST_OPTIONS = {
     headers: new HttpHeaders({
@@ -439,6 +443,7 @@ export class PrintmapsService {
     // Function to modify the payload by removing comments from UserObjects' Style fields
     modifyPayload(payload: any): any {
         console.log("****** modifiing payload ...");
+        Logger.log(LogLevel.DEBUG, 'modifiing payload ...');
         // Iterate over UserObjects and remove comments from the Style field
         if (payload.Data?.Attributes?.UserObjects) {
             payload.Data.Attributes.UserObjects.forEach((userObject: any) => {
