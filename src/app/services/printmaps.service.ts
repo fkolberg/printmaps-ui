@@ -310,112 +310,110 @@ export class PrintmapsService {
     }
 
     createOrUpdateMapRenderingJob(mapProject: MapProject): Observable<MapProject> {
-        let endpointUrl = `${this.baseUrl}/metadata${mapProject.id ? "/patch" : ""}`;
-        return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.toMapRenderingJob(mapProject), REQUEST_OPTIONS)
-            .pipe(
-                map(mapRenderingJob => this.fromMapRenderingJob(mapProject.name, mapRenderingJob)),
-                tap(savedMapProject =>
-                    this.toUserFiles(mapProject).forEach(userFile =>
-                        this.uploadUserFile(savedMapProject.id, userFile.content, userFile.name).subscribe())),
-                concatMap(savedMapProject =>
-                    this.loadMapProjectState(savedMapProject.id)
-                        .pipe(
-                            map(mapProjectState => ({
+        if (false) {
+            // original
+            let endpointUrl = `${this.baseUrl}/metadata${mapProject.id ? "/patch" : ""}`;
+            return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.toMapRenderingJob(mapProject), REQUEST_OPTIONS)
+                .pipe(
+                    map(mapRenderingJob => this.fromMapRenderingJob(mapProject.name, mapRenderingJob)),
+                    tap(savedMapProject =>
+                        this.toUserFiles(mapProject).forEach(userFile =>
+                            this.uploadUserFile(savedMapProject.id, userFile.content, userFile.name).subscribe())),
+                    concatMap(savedMapProject =>
+                        this.loadMapProjectState(savedMapProject.id)
+                            .pipe(
+                                map(mapProjectState => ({
+                                        ...savedMapProject,
+                                        state: mapProjectState
+                                    })
+                                )
+                            )
+                    ),
+                    catchError(() => EMPTY)
+                );
+        } else {
+            // HACK
+            let endpointUrl = `${this.baseUrl}/metadata${mapProject.id ? "/patch" : ""}`;
+    
+            return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.toMapRenderingJob(mapProject), REQUEST_OPTIONS)
+                .pipe(
+                    map(mapRenderingJob => this.fromMapRenderingJob(mapProject.name, mapRenderingJob)),
+                    tap(savedMapProject =>
+                        this.toUserFiles(mapProject).forEach(userFile =>
+                            this.uploadUserFile(savedMapProject.id, userFile.content, userFile.name).subscribe())),
+                    concatMap(savedMapProject =>
+                        this.loadMapProjectState(savedMapProject.id)
+                            .pipe(
+                                map(mapProjectState => ({
                                     ...savedMapProject,
                                     state: mapProjectState
-                                })
+                                }))
                             )
-                        )
-                ),
-                catchError(() => EMPTY)
-            );
-    }
-
-    createOrUpdateMapRenderingJob_hack(mapProject: MapProject): Observable<MapProject> {
-        let endpointUrl = `${this.baseUrl}/metadata${mapProject.id ? "/patch" : ""}`;
-    
-        return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.toMapRenderingJob(mapProject), REQUEST_OPTIONS)
-            .pipe(
-                map(mapRenderingJob => this.fromMapRenderingJob(mapProject.name, mapRenderingJob)),
-                tap(savedMapProject =>
-                    this.toUserFiles(mapProject).forEach(userFile =>
-                        this.uploadUserFile(savedMapProject.id, userFile.content, userFile.name).subscribe())),
-                concatMap(savedMapProject =>
-                    this.loadMapProjectState(savedMapProject.id)
-                        .pipe(
-                            map(mapProjectState => ({
-                                ...savedMapProject,
-                                state: mapProjectState
-                            }))
-                        )
-                ),
-                // After loading the map state, upload the UI file with map data
-                concatMap(savedMapProjectWithState => {
-                    if (true) {  // Your condition here (modify as needed)
-                        // Create an updated mapProject object with the new ID
-                        const updatedMapProject = { 
-                            ...mapProject,  // Copy existing mapProject properties
-                            id: savedMapProjectWithState.id  // Update with the ID from the first POST request
-                        };
-    
-                        console.log(">>> updated mapProject.id: " + updatedMapProject.id); // Now the ID will be correct
-                        console.log(">>> savedMapProjectWithState.id: " + savedMapProjectWithState.id);
-    
-                        // Create the contentBlob using the updated mapProject with the new ID
-                        const contentBlob = new Blob(
-                            [JSON.stringify(this.toMapRenderingJob(updatedMapProject))],  // Use updated mapProject
-                            { type: 'application/json' }
-                        );
-    
-                        const filename = `${savedMapProjectWithState.id}.ui`;
-                        const formData = new FormData();
-                        formData.append('file', contentBlob, filename);
-    
-                        // Second POST request to upload the UI file
-                        const secondEndpointUrl = `${this.baseUrl}/upload/${savedMapProjectWithState.id}`;
-                        return this.http.post(
-                            secondEndpointUrl,
-                            formData,
-                            {
-                                headers: {
-                                    'Accept': 'application/vnd.api+json; charset=utf-8'
-                                },
-                                observe: 'response'  // Make sure to observe the full response
-                            }
-                        ).pipe(
-                            tap((response) => {
-                                console.log('Response:', response);  // Log the full response object
-                                if (response.status === 201) {
-                                    console.log('UI file uploaded (201 Created)');
-                                } else {
-                                    console.warn(`UI file upload returned: ${response.status}`);
+                    ),
+                    // After loading the map state, upload the UI file with map data
+                    concatMap(savedMapProjectWithState => {
+                        if (true) {  // Your condition here (modify as needed)
+                            // Create an updated mapProject object with the new ID
+                            const updatedMapProject = { 
+                                ...mapProject,  // Copy existing mapProject properties
+                                id: savedMapProjectWithState.id  // Update with the ID from the first POST request
+                            };
+        
+                            console.log(">>> updated mapProject.id: " + updatedMapProject.id); // Now the ID will be correct
+                            console.log(">>> savedMapProjectWithState.id: " + savedMapProjectWithState.id);
+        
+                            // Create the contentBlob using the updated mapProject with the new ID
+                            const contentBlob = new Blob(
+                                [JSON.stringify(this.toMapRenderingJob(updatedMapProject))],  // Use updated mapProject
+                                { type: 'application/json' }
+                            );
+        
+                            const filename = `${savedMapProjectWithState.id}.ui`;
+                            const formData = new FormData();
+                            formData.append('file', contentBlob, filename);
+        
+                            // Second POST request to upload the UI file
+                            const secondEndpointUrl = `${this.baseUrl}/upload/${savedMapProjectWithState.id}`;
+                            return this.http.post(
+                                secondEndpointUrl,
+                                formData,
+                                {
+                                    headers: {
+                                        'Accept': 'application/vnd.api+json; charset=utf-8'
+                                    },
+                                    observe: 'response'  // Make sure to observe the full response
                                 }
-                            }),
-                            mapTo(savedMapProjectWithState),  // Continue with savedMapProjectWithState
-                            
-                            catchError(error => {
-                                // TODO FIXME 
-                                // why entering into this catch ???
-                                // console.error('Error uploading UI file:', error);  // Log the error
-                                // Ensure that you only return savedMapProjectWithState on actual errors
-                                return of(savedMapProjectWithState);  // Continue with the flow even on error
-                            })
-                        );
-                    } else {
-                        return of(savedMapProjectWithState);  // If the condition is false, just return the savedMapProjectWithState
-                    }
-                }),
-                // Catch any errors and prevent the observable from crashing
-                catchError(error => {
-                    console.error('Error in map rendering job process:', error);  // Log any other errors in the entire process
-                    return EMPTY;  // End the observable chain if there's a general error
-                })
-            );
-    }
-    
-    
-    
-    
+                            ).pipe(
+                                tap((response) => {
+                                    console.log('Response:', response);  // Log the full response object
+                                    if (response.status === 201) {
+                                        console.log('UI file uploaded (201 Created)');
+                                    } else {
+                                        console.warn(`UI file upload returned: ${response.status}`);
+                                    }
+                                }),
+                                mapTo(savedMapProjectWithState),  // Continue with savedMapProjectWithState
+                                
+                                catchError(error => {
+                                    // TODO FIXME 
+                                    // why entering into this catch ???
+                                    // console.error('Error uploading UI file:', error);  // Log the error
+                                    // Ensure that you only return savedMapProjectWithState on actual errors
+                                    return of(savedMapProjectWithState);  // Continue with the flow even on error
+                                })
+                            );
+                        } else {
+                            return of(savedMapProjectWithState);  // If the condition is false, just return the savedMapProjectWithState
+                        }
+                    }),
+                    // Catch any errors and prevent the observable from crashing
+                    catchError(error => {
+                        console.error('Error in map rendering job process:', error);  // Log any other errors in the entire process
+                        return EMPTY;  // End the observable chain if there's a general error
+                    })
+                );
+        }        
+    } 
 
     uploadUserFile(mapProjectId: string, content: string | Blob, name: string): Observable<boolean> {
         let formData = new FormData();
