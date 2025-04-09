@@ -201,7 +201,7 @@ export class PrintmapsService {
             );
     }
 
-    loadMapProject__(mapProjectReference: MapProjectReference): Observable<MapProject> {
+    loadMapProject_HACK(mapProjectReference: MapProjectReference): Observable<MapProject> {
         let endpointUrl = `${this.baseUrl}/uidata/${mapProjectReference.id}`;
         return this.http.get(endpointUrl, { responseType: 'blob' })  // Expecting the response as a blob (binary data)
             .pipe(
@@ -222,6 +222,8 @@ export class PrintmapsService {
             
             reader.onloadend = () => {
                 const responseText = reader.result as string;
+
+                console.log("****** responseText: " + responseText);
     
                 try {
                     let mapRenderingJob: MapRenderingJobDefinition;
@@ -231,6 +233,7 @@ export class PrintmapsService {
     
                     // If it's valid JSON, proceed as normal
                     const mapProject = this.fromMapRenderingJob(mapProjectName, mapRenderingJob);
+                    console.log("****** mapProject: " + mapProject);
     
                     // Now load the map project state (same as before)
                     this.loadMapProjectState(mapProject.id).pipe(
