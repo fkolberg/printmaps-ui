@@ -110,47 +110,6 @@ export class MapComponent implements AfterViewInit {
     let mapHandler = L.map("map", { zoom: 12 });
     MapComponent.addOsmLayer(mapHandler);
 
-    /******************************** 
-    let mapProjectId = "";
-    this.store.select(currentMapProject).subscribe(cp => {
-     mapProjectId = cp.id;
-    });
-
-    mapProjectId = "f4b0d841-3a88-4e16-af88-461f4edbe85c";
-    this.store.dispatch(
-      UiActions.uploadUserFile({
-        id: mapProjectId,
-        userFile: {               
-          name: "bla",
-          content: "blub"        
-        }
-      })
-    );
-    */
-
-    // ***********************************************
-    if (false) {
-      //MapComponent.addTestLayer(mapHandler);
-
-      GpxDataMap.initialize(); // Make sure this is called once to set the initial GPX data
-      // Retrieve the GPX XML data for 'Sperrung' and 'Sperrung2'
-      let gpx1Xml = GpxDataMap.getGpxData("gpx1");
-      let gpx2Xml = GpxDataMap.getGpxData("gpx2");
-
-      console.log(
-        `zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz ngAfterViewInit` +
-          " gpx1Xml " +
-          gpx1Xml
-      ); // if (false)
-
-      let gpx1TrackHandler = gpx.parse(gpx1Xml);
-      gpx1TrackHandler.addTo(mapHandler); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-      let gpx2TrackHandler = gpx.parse(gpx2Xml);
-      gpx2TrackHandler.addTo(mapHandler); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    }
-    // ***********************************************
-
     let areaSelectHandler;
     let areaSelectHandlerSubscriptions = [];
     this.active$.subscribe((active) => {
@@ -190,6 +149,7 @@ export class MapComponent implements AfterViewInit {
   */
   private bindToStore() {
     console.log(">>> bindToStore");
+    // comment by Lucien Weller
     // TODO: refactor direct binding to store to make map component reusable
 
     /*
