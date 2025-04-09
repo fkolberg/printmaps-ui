@@ -395,7 +395,7 @@ export class PrintmapsService {
                             
                             catchError(error => {
                                 // TODO FIXME 
-                                // why coming to this catch ???
+                                // why entering into this catch ???
                                 // console.error('Error uploading UI file:', error);  // Log the error
                                 // Ensure that you only return savedMapProjectWithState on actual errors
                                 return of(savedMapProjectWithState);  // Continue with the flow even on error
