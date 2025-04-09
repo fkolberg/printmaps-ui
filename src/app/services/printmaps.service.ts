@@ -333,7 +333,7 @@ export class PrintmapsService {
             // HACK
             let endpointUrl = `${this.baseUrl}/metadata${mapProject.id ? "/patch" : ""}`;
     
-            return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.toMapRenderingJob(mapProject), REQUEST_OPTIONS)
+            return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.modifyPayload(this.toMapRenderingJob(mapProject)), REQUEST_OPTIONS)
                 .pipe(
                     map(mapRenderingJob => this.fromMapRenderingJob(mapProject.name, mapRenderingJob)),
                     tap(savedMapProject =>
@@ -412,6 +412,26 @@ export class PrintmapsService {
                 );
         }        
     } 
+
+    // Function to modify the payload by removing comments from UserObjects' Style fields
+    modifyPayload(payload: any): any {
+        console.log("****** modifiing payload ...");
+        // Iterate over UserObjects and remove comments from the Style field
+        if (payload.Data?.Attributes?.UserObjects) {
+            payload.Data.Attributes.UserObjects.forEach((userObject: any) => {
+                if (userObject.Style) {
+                    userObject.Style = this.removeCommentsFromStyle(userObject.Style);  // Remove comments
+                }
+            });
+        }
+        return payload;
+    }
+
+    // Function to remove comments inside <!-- --> in a string
+    removeCommentsFromStyle(style: string): string {
+        const regex = /<!--[\s\S]*?-->/g;  // Regular expression to match <!-- ... -->
+        return style.replace(regex, '');  // Replace all comments with an empty string
+    }
 
     uploadUserFile(mapProjectId: string, content: string | Blob, name: string): Observable<boolean> {
         let formData = new FormData();
