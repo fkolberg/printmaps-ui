@@ -119,26 +119,49 @@ export class PrintmapsService {
         let styleXml = parser.parseFromString(userObject.Style, "application/xml");
         let lineSymbolizerAttributes = styleXml.getElementsByTagName("LineSymbolizer")[0].attributes;
         
-        return {
-            type: AdditionalElementType.GPX_TRACK,
-            id: metadata.ID ?? uuid(),
-            style: {
-                type: AdditionalElementStyleType.TRACK,
-                lineWidth: parseFloat(lineSymbolizerAttributes.getNamedItem("stroke-width")?.value
-                    ?? DEFAULT_TRACK_STYLE.lineWidth.toString()),
-                lineColor: {
-                    rgbHexValue: lineSymbolizerAttributes.getNamedItem("stroke")?.value
-                        ?? DEFAULT_TRACK_STYLE.lineColor.rgbHexValue,
-                    opacity: parseFloat(lineSymbolizerAttributes.getNamedItem("stroke-opacity")?.value
-                        ?? DEFAULT_TRACK_STYLE.lineColor.opacity.toString())
+        if (false) {
+            // original
+            return {
+                type: AdditionalElementType.GPX_TRACK,
+                id: metadata.ID ?? uuid(),
+                style: {
+                    type: AdditionalElementStyleType.TRACK,
+                    lineWidth: parseFloat(lineSymbolizerAttributes.getNamedItem("stroke-width")?.value
+                        ?? DEFAULT_TRACK_STYLE.lineWidth.toString()),
+                    lineColor: {
+                        rgbHexValue: lineSymbolizerAttributes.getNamedItem("stroke")?.value
+                            ?? DEFAULT_TRACK_STYLE.lineColor.rgbHexValue,
+                        opacity: parseFloat(lineSymbolizerAttributes.getNamedItem("stroke-opacity")?.value
+                            ?? DEFAULT_TRACK_STYLE.lineColor.opacity.toString())
+                    },
+                    smooth: parseFloat(lineSymbolizerAttributes.getNamedItem("smooth")?.value
+                        ?? DEFAULT_TRACK_STYLE.smooth.toString()) 
+                },               
+                file: {name: metadata.File, data: undefined, modified: new Date().getTime()}                
+            };
+        } else {
+            // HACK
+            return {
+                type: AdditionalElementType.GPX_TRACK,
+                id: metadata.ID ?? uuid(),
+                style: {
+                    type: AdditionalElementStyleType.TRACK,
+                    lineWidth: parseFloat(lineSymbolizerAttributes.getNamedItem("stroke-width")?.value
+                        ?? DEFAULT_TRACK_STYLE.lineWidth.toString()),
+                    lineColor: {
+                        rgbHexValue: lineSymbolizerAttributes.getNamedItem("stroke")?.value
+                            ?? DEFAULT_TRACK_STYLE.lineColor.rgbHexValue,
+                        opacity: parseFloat(lineSymbolizerAttributes.getNamedItem("stroke-opacity")?.value
+                            ?? DEFAULT_TRACK_STYLE.lineColor.opacity.toString())
+                    },
+                    smooth: parseFloat(lineSymbolizerAttributes.getNamedItem("smooth")?.value
+                        ?? DEFAULT_TRACK_STYLE.smooth.toString()) 
                 },
-                smooth: parseFloat(lineSymbolizerAttributes.getNamedItem("smooth")?.value
-                    ?? DEFAULT_TRACK_STYLE.smooth.toString()) 
-            },
-            // ?????????????????????????????? !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //file: {name: metadata.File, data: undefined, modified: new Date().getTime()}
-            file: {name: metadata.File, data: metadata.Data, modified: new Date().getTime()}
-        };
+                // data: metadata.Data instead of data: undefined
+                file: {name: metadata.File, data: metadata.Data, modified: new Date().getTime()}
+            };
+        }
+        
     }
 
     private static extractMargins(userObject: UserObject): { top: number, bottom: number, left: number, right: number } {
