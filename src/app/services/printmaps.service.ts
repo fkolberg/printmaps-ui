@@ -184,7 +184,7 @@ export class PrintmapsService {
     }
 
     loadMapProject(mapProjectReference: MapProjectReference): Observable<MapProject> {
-        if (true) {
+        if (false) {
             // original
             let endpointUrl = `${this.baseUrl}/metadata/${mapProjectReference.id}`;
             return this.http.get<MapRenderingJobDefinition>(endpointUrl)
@@ -204,15 +204,35 @@ export class PrintmapsService {
         } else {
             // HACK
             let endpointUrl = `${this.baseUrl}/uidata/${mapProjectReference.id}`;
-        return this.http.get(endpointUrl, { responseType: 'blob' })  // Expecting the response as a blob (binary data)
-            .pipe(
-                // Log the response from the first HTTP request
-                tap((responseBlob) => {
-                    console.log('>>> Fetched MapRenderingJob from uidata endpoint:', responseBlob);
-                }),
-                concatMap((responseBlob) => this.handleResponse(responseBlob, mapProjectReference.name)),  // Handle response (binary or JSON)
-                catchError(() => EMPTY)
-            );
+            return this.http.get(endpointUrl, { responseType: 'blob' })  // Expecting the response as a blob (binary data)
+                .pipe(
+                    // Log the response from the first HTTP request
+                    tap((responseBlob) => {
+                        console.log('>>> Fetched MapRenderingJob from uidata endpoint:', responseBlob);
+                    }),
+                    concatMap((responseBlob) => this.handleResponse(responseBlob, mapProjectReference.name)),  // Handle response (binary or JSON)
+                    //catchError(() => EMPTY)
+                    catchError(() => {
+                        console.log('>>> Failed to fetch from uidata, falling back to original logic');
+                        
+                        // Original code block if uidata request fails
+                        let endpointUrlOriginal = `${this.baseUrl}/metadata/${mapProjectReference.id}`;
+                        return this.http.get<MapRenderingJobDefinition>(endpointUrlOriginal)
+                            .pipe(
+                                map(mapRenderingJob => this.fromMapRenderingJob(mapProjectReference.name, mapRenderingJob)),
+                                concatMap(mapProject =>
+                                    this.loadMapProjectState(mapProject.id)
+                                        .pipe(                            
+                                            map(mapProjectState => {
+                                                mapProject.state = mapProjectState;
+                                                return mapProject;
+                                            })
+                                        )
+                                ),
+                                catchError(() => EMPTY)  // If original logic fails, return empty observable
+                            );
+                    })
+                );
         }
     }            
     
