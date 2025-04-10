@@ -106,6 +106,8 @@ Normally the Printmaps should now be opened in your web browser.
 * keine <!-...--> in Sytle-Attribut der Userdata, aber in Datei ui.id
 * Nutzung der Datei 'id.ui' (z.B. 68ebf90d-aac6-45dc-8434-781ee348f219.ui)
 * Logging (logger.utils.ts)
+* loggingLevel in config.json auf DEBUG und in config.sample.json auf INFO
+* loggingLevel in config.json für production sollte auf dem Server auf INFO gesetzt werden !
 
 ## Version 0.0.4
 

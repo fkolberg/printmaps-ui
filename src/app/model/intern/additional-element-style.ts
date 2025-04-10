@@ -70,25 +70,28 @@ function convertAdditionalTrackElementToSymbolizer(_templateService: TemplateSer
         ID: element.id,
         Type: element.type,
         File: element.file?.name,
-        Data: element.file?.data // ?????????????????????????????? !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        Data: element.file?.data // e.g. gpx track data
     };
-    //return `<!--${JSON.stringify(metadata)}--><LineSymbolizer stroke='${element.style.lineColor.rgbHexValue}' stroke-width='${element.style.lineWidth}' stroke-opacity='${element.style.lineColor.opacity}' stroke-linecap='round' stroke-linejoin='round' smooth='1' />`;
-    
-    // Ensure smooth is between 0 and 1, no need to convert it to a percentage
-    let smoothValue = typeof element.style.smooth === 'number' ? element.style.smooth : 0;
+    if (false) {
+        // original
+        return `<!--${JSON.stringify(metadata)}--><LineSymbolizer stroke='${element.style.lineColor.rgbHexValue}' stroke-width='${element.style.lineWidth}' stroke-opacity='${element.style.lineColor.opacity}' stroke-linecap='round' stroke-linejoin='round' smooth='1' />`;
+    } else {
+        // Ensure smooth is between 0 and 1, no need to convert it to a percentage
+        let smoothValue = typeof element.style.smooth === 'number' ? element.style.smooth : 0;
 
-    // Clamp the value between 0 and 1
-    smoothValue = Math.min(1, Math.max(0, smoothValue));
+        // Clamp the value between 0 and 1
+        smoothValue = Math.min(1, Math.max(0, smoothValue));
 
-    // Format the value to 2 decimal places
-    const smoothFormatted = smoothValue.toFixed(2);
+        // Format the value to 2 decimal places
+        const smoothFormatted = smoothValue.toFixed(2);
 
-    let result = `<!--${JSON.stringify(metadata)}--><LineSymbolizer stroke='${element.style.lineColor.rgbHexValue}' stroke-width='${element.style.lineWidth}' stroke-opacity='${element.style.lineColor.opacity}' stroke-linecap='round' stroke-linejoin='round' smooth='${smoothValue}' />`;
-    
-    // da sollten jetzt die vielen Track-daten drin stehen
-    //Logger.debug("****** Generated Symbolizer String:", result);
+        let result = `<!--${JSON.stringify(metadata)}--><LineSymbolizer stroke='${element.style.lineColor.rgbHexValue}' stroke-width='${element.style.lineWidth}' stroke-opacity='${element.style.lineColor.opacity}' stroke-linecap='round' stroke-linejoin='round' smooth='${smoothValue}' />`;
+        
+        // da sollten jetzt die vielen Track-daten drin stehen
+        //Logger.debug("****** Generated Symbolizer String:", result);
 
-    return result;
+        return result;
+    }    
 }
 
 function convertAdditionalScaleElementToSymbolizer(_templateService: TemplateService, _mapProject: MapProject, element: AdditionalScaleElement): string {

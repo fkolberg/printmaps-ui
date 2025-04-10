@@ -6,5 +6,5 @@
   },
   "autoUploadIntervalInSeconds": 5,
   "mapStatePollingIntervalInSeconds": 1,
-  "loggingLevel" : "INFO"
+  "loggingLevel": "INFO"
 }
