@@ -1,3 +1,5 @@
+// main.actions.ts
+
 import {createAction, props} from "@ngrx/store";
 import {createActionType} from "../utils/message.util";
 import {Scale} from "../model/intern/scale";
@@ -80,9 +82,6 @@ export const mapProjectDeleted = createAction(
 
 export type UploadMapProjectFollowUpAction = "close" | "copy" | "launchRendering";
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-export type UploadUserFileFollowUpAction = "close" | "copy";
-
 export const uploadMapProject = createAction(
     createActionType(SOURCE, "UPLOAD_MAP_PROJECT"),
     props<{ mapProject: MapProject, followUpAction?: UploadMapProjectFollowUpAction }>()
@@ -93,37 +92,9 @@ export const mapProjectUploaded = createAction(
     props<{ mapProjectReference: MapProjectReference, followUpAction?: UploadMapProjectFollowUpAction }>()
 );
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-export const uploadUserFile = createAction(
-    createActionType(SOURCE, "UPLOAD_USER_FILE"),
-    props<{ mapProject: MapProject }>()
-);
-
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-export const userFileUploaded = createAction(
-    createActionType(SOURCE, "USER_FILE_UPLOADED"),
-    props<{ id: string, userFile: UserFile, followUpAction?: UploadUserFileFollowUpAction }>()
-);
-
-// New action to handle the failure case
-export const uploadUserFileFailed = createAction(
-    '[UI] Upload User File Failed',
-    props<{ id: string, userFile: UserFile, error: string }>() // You can include an error message if needed
-  );
-
 export function createUploadMapProjectFollowUpAction(followUpAction: UploadMapProjectFollowUpAction, id: string) {
     return followUpAction == "launchRendering" ? launchMapProjectRendering({id: id}) : undefined;
 }
-
-export const loadUserFile = createAction(
-    createActionType(SOURCE, "LOAD_USER_FILE"),
-    props<{ mapProjectReference: MapProjectReference }>()
-);
-
-export const userFileLoaded = createAction(
-    createActionType(SOURCE, "USER_FILE_LOADED"),
-    props<{ userFile: UserFile }>()
-);
 
 export const launchMapProjectRendering = createAction(
     createActionType(SOURCE, "LAUNCH_MAP_PROJECT_RENDERING"),
