@@ -99,6 +99,14 @@ Normally the Printmaps should now be opened in your web browser.
 
 # Change Log
 
+## Version 1.0.2
+
+* smooth 
+* Track-Daten in NgRx-Store 
+* keine <!-...--> in Sytle-Attribut der Userdata, aber in Datei ui.id
+* Nutzung der Datei 'id.ui' (z.B. 68ebf90d-aac6-45dc-8434-781ee348f219.ui)
+* Logging (logger.utils.ts)
+
 ## Version 0.0.4
 
 * Page margins
