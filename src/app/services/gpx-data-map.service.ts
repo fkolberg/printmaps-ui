@@ -1,5 +1,8 @@
 // gpx-data-map.service.ts
 
+
+import {Logger, LogLevel} from "../utils/logger.util";
+
 export class GpxDataMap {
   // Create a Map to store GPX data
   static data: Map<string, string> = new Map();
@@ -88,8 +91,8 @@ export class GpxDataMap {
 
   // Add new GPX data to the map
   static addGpxData(key: string, gpxData: string): void {
-    console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz GpxDataMap addGpxData key: ` + key);
-    console.log(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz GpxDataMap addGpxData gpxData: ` + gpxData);
+    Logger.debug(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz GpxDataMap addGpxData key: ` + key);
+    Logger.debug(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz GpxDataMap addGpxData gpxData: ` + gpxData);
     this.data.set(key, gpxData);
   }
 

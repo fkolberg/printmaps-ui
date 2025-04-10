@@ -1,3 +1,5 @@
+// main.effects.ts
+
 import {Injectable} from "@angular/core";
 import {Actions, createEffect, ofType} from "@ngrx/effects";
 import {
@@ -24,6 +26,8 @@ import {MapProjectReferenceService} from "../services/map-project-reference.serv
 import {isEqual} from "lodash";
 import {MapProjectState} from "../model/intern/map-project-state";
 import {ConfigurationService} from "../services/configuration.service";
+
+import {Logger, LogLevel} from "../utils/logger.util";
 
 // noinspection JSUnusedGlobalSymbols
 @Injectable()
@@ -121,7 +125,7 @@ export class MainEffects {
             .pipe(
                 tap(nextMapProjectReferences => {
                     // Log the map project references before the filter
-                    console.log('>>> autoSaveMapProjectReferences effect triggered with:', nextMapProjectReferences);
+                    Logger.debug('>>> autoSaveMapProjectReferences effect triggered with:' + nextMapProjectReferences);
                 }),
                 filter(nextMapProjectReferences => !!nextMapProjectReferences),
                 distinctUntilChanged((previousValue, nextValue) =>

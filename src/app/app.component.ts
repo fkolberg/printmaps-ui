@@ -7,8 +7,11 @@ import {MatIconRegistry} from "@angular/material/icon";
 import {DomSanitizer} from "@angular/platform-browser";
 import {AdditionalElementType} from "./model/intern/additional-element";
 
-import { LoggingService } from './services/logging.service';
-//import { JsonStorageService } from './services/json-storage.service';
+import { environment } from '../environments/environment';
+
+import { ConfigurationService } from './services/configuration.service';
+
+import {Logger, LogLevel} from "./utils/logger.util";
 
 @Component({
     selector: "app-root",
@@ -20,9 +23,7 @@ export class AppComponent implements OnInit {
                 @Inject(LOCALE_ID) public readonly locale: string,
                 private iconRegistry: MatIconRegistry,
                 private sanitizer: DomSanitizer,
-                private loggingService: LoggingService) {
-        
-        console.log(`xxx info AppComponent OnInit`);
+                private configService: ConfigurationService) {
         
         this.registerIcons();
         store.dispatch(UiActions.loadMapProjectReferences());
@@ -34,9 +35,11 @@ export class AppComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        console.log(`xxx info AppComponent ngOnInit`);
-        
-        //this.logMessages();
+        // Initialize the Logger before any log calls
+        Logger.initialize(this.configService);
+
+        // Now logging works
+        Logger.debug('App initialized');
         
         this.store.dispatch(UiActions.init());
     }
@@ -55,14 +58,5 @@ export class AppComponent implements OnInit {
     private registerIcon(namespace: string, iconName: string) {
         this.iconRegistry.addSvgIconInNamespace(namespace, iconName,
             this.sanitizer.bypassSecurityTrustResourceUrl(`./assets/${namespace}/${iconName}.svg`));
-    }
-
-    logMessages(): void {
-        this.loggingService.log('This is a generic log message');
-        this.loggingService.logInfo('This is an info log message');
-        this.loggingService.logWarning('This is a warning log message');
-        this.loggingService.logError('This is an error log message');
-      }
-
-     
+    }    
 }

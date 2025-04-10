@@ -235,13 +235,13 @@ export class PrintmapsService {
                 .pipe(
                     // Log the response from the first HTTP request
                     tap((responseBlob) => {
-                        console.log('>>> Fetched MapRenderingJob from uidata endpoint:', responseBlob);
+                        Logger.debug('>>> Fetched MapRenderingJob from uidata endpoint: ' + responseBlob);
                     }),
                     concatMap((responseBlob) => this.handleResponse(responseBlob, mapProjectReference.name)),  // Handle response (binary or JSON)
                     //catchError(() => EMPTY) 
                     // fallback to original code
                     catchError(() => {
-                        console.log('>>> Failed to fetch from uidata, falling back to original logic');
+                        Logger.debug('>>> Failed to fetch from uidata, falling back to original logic');
                         
                         // Original code block if uidata request fails
                         let endpointUrlOriginal = `${this.baseUrl}/metadata/${mapProjectReference.id}`;
@@ -274,7 +274,7 @@ export class PrintmapsService {
             reader.onloadend = () => {
                 const responseText = reader.result as string;
 
-                console.log("****** responseText: " + responseText);
+                Logger.debug("****** responseText: " + responseText);
     
                 try {
                     let mapRenderingJob: MapRenderingJobDefinition;
@@ -284,7 +284,7 @@ export class PrintmapsService {
     
                     // If it's valid JSON, proceed as normal
                     const mapProject = this.fromMapRenderingJob(mapProjectName, mapRenderingJob);
-                    console.log("****** mapProject: " + mapProject);
+                    Logger.debug("****** mapProject: " + mapProject);
     
                     // Now load the map project state (same as before)
                     this.loadMapProjectState(mapProject.id).pipe(
@@ -384,8 +384,8 @@ export class PrintmapsService {
                                 id: savedMapProjectWithState.id  // Update with the ID from the first POST request
                             };
         
-                            console.log(">>> updated mapProject.id: " + updatedMapProject.id); // Now the ID will be correct
-                            console.log(">>> savedMapProjectWithState.id: " + savedMapProjectWithState.id);
+                            Logger.debug(">>> updated mapProject.id: " + updatedMapProject.id); // Now the ID will be correct
+                            Logger.debug(">>> savedMapProjectWithState.id: " + savedMapProjectWithState.id);
         
                             // Create the contentBlob using the updated mapProject with the new ID
                             const contentBlob = new Blob(
@@ -410,9 +410,9 @@ export class PrintmapsService {
                                 }
                             ).pipe(
                                 tap((response) => {
-                                    console.log('Response:', response);  // Log the full response object
+                                    Logger.debug('Response:' + response);  // Log the full response object
                                     if (response.status === 201) {
-                                        console.log('UI file uploaded (201 Created)');
+                                        Logger.debug('UI file uploaded (201 Created)');
                                     } else {
                                         console.warn(`UI file upload returned: ${response.status}`);
                                     }
@@ -442,7 +442,7 @@ export class PrintmapsService {
 
     // Function to modify the payload by removing comments from UserObjects' Style fields
     modifyPayload(payload: any): any {
-        console.log("****** modifiing payload ...");
+        Logger.debug("****** modifiing payload ...");
         Logger.log(LogLevel.DEBUG, 'modifiing payload ...');
         // Iterate over UserObjects and remove comments from the Style field
         if (payload.Data?.Attributes?.UserObjects) {

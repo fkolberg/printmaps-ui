@@ -1,3 +1,5 @@
+// main.reducers.ts
+
 import {Action, createReducer, on} from "@ngrx/store";
 import {round} from "lodash";
 import * as UiActions from "../actions/main.actions";
@@ -15,6 +17,8 @@ import {
 import {DEFAULT_SCALE_STYLE, DEFAULT_TEXT_STYLE, DEFAULT_TRACK_STYLE} from "../model/intern/additional-element-style";
 import {v4 as uuid} from "uuid";
 import {generateMapProjectCopyName, MapProject} from "../model/intern/map-project";
+
+import {Logger, LogLevel} from "../utils/logger.util";
 
 const reducer = createReducer(initialState,
 
@@ -280,7 +284,7 @@ const reducer = createReducer(initialState,
         on(UiActions.removeAdditionalElement,
             (state, {id}) => {
                 // Log the state before the update
-                console.log('zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz main.reducer.ts Before update:', state);
+                Logger.debug('zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz main.reducer.ts Before update:' + state);
                 
                 const updatedState = {
                     ...state,
@@ -295,7 +299,7 @@ const reducer = createReducer(initialState,
                 };
                 
                 // Log the updated state
-                console.log('zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz main.reducer.ts After update:', state);
+                Logger.debug('zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz main.reducer.ts After update:' + state);
                                 
                 return updatedState;
             }

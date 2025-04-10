@@ -6,6 +6,8 @@ import {from, Observable, of, zip} from "rxjs";
 import {PrintmapsService} from "./printmaps.service";
 import {concatMap, map, switchMap, toArray} from "rxjs/operators";
 
+import {Logger, LogLevel} from "../utils/logger.util";
+
 const SCHEMA_VERSION = "schemaVersion";
 const MAP_PROJECT_REFERENCES = "mapProjectReferences";
 
@@ -48,7 +50,7 @@ export class MapProjectReferenceService {
  
     saveMapProjectReferences(mapProjectReferences: MapProjectReference[]): Observable<boolean> {
         MapProjectReferenceService.checkOrUpdateSchemaVersion();
-        console.log(">>> saveMapProjectReferences in map-project-reference.service.ts mapProjectReferences: " + mapProjectReferences);
+        Logger.debug(">>> saveMapProjectReferences in map-project-reference.service.ts mapProjectReferences: " + mapProjectReferences);
         return from(new Promise<boolean>((resolve) => {
             localStorage.setItem(MAP_PROJECT_REFERENCES, JSON.stringify(mapProjectReferences));
             resolve(true);

@@ -42,9 +42,6 @@ import { getScaleProperties, Scale } from "../../model/intern/scale";
 import { ConfigurationService } from "../../services/configuration.service";
 import { gpx } from "@mapbox/leaflet-omnivore";
 import { AdditionalGpxElement } from "../../model/intern/additional-element";
-
-import { LoggingService } from "./../../services/logging.service";
-import { JsonStorageService } from "./../../services/json-storage.service";
 import { GpxDataMap } from "./../../services/gpx-data-map.service";
 
 import {Logger, LogLevel} from "../../utils/logger.util";
@@ -85,9 +82,7 @@ export class MapComponent implements AfterViewInit {
 
   constructor(
     private readonly configurationService: ConfigurationService,
-    private store: Store<any>,
-    private loggingService: LoggingService,
-    private jsonStorageService: JsonStorageService
+    private store: Store<any>,    
   ) {
     this.bindToStore();
   }
@@ -148,7 +143,7 @@ export class MapComponent implements AfterViewInit {
     whenever certain component properties change.
   */
   private bindToStore() {
-    console.log(">>> bindToStore");
+    Logger.debug(">>> bindToStore");
     // comment by Lucien Weller
     // TODO: refactor direct binding to store to make map component reusable
 
@@ -251,7 +246,7 @@ export class MapComponent implements AfterViewInit {
             from the store at that moment. 
             This will be passed each time the state is updated.
 
-        console.log(...):
+        Logger.debug(...):
             This logs a message to the console every time the currentAdditionalGpxElements changes. 
             It appears to be primarily for debugging purposes 
             and allows you to observe when this part of the state is updated.
@@ -359,8 +354,8 @@ export class MapComponent implements AfterViewInit {
 
   // called from bindToStore (where listens for changes in currentAdditionalGpxElements)
   private updateGpxTracks(additionalGpxElements: AdditionalGpxElement[]) {
-    // console.log("+++ updateGpxTracks for " + additionalGpxElements.length  + " tracks");
-    // console.log(`+++ updateGpxTracks for ${additionalGpxElements.length} tracks`);
+    // Logger.debug("+++ updateGpxTracks for " + additionalGpxElements.length  + " tracks");
+    // Logger.debug(`+++ updateGpxTracks for ${additionalGpxElements.length} tracks`);
     Logger.log(LogLevel.DEBUG, `updateGpxTracks for ${additionalGpxElements.length} tracks`);
 
     let gpxElementIdsToRemove = new Set<string>(
@@ -382,14 +377,14 @@ export class MapComponent implements AfterViewInit {
           new Date().getTime();
         let modified = additionalGpxElement.file.modified > lastUpdate;
         if (currentGpxTrackHandler && modified) {
-          console.log("+++ updateGpxTracks remove file.name:" + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
+          Logger.debug("+++ updateGpxTracks remove file.name:" + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
           currentGpxTrackHandler.remove();
         }
         if (!currentGpxTrackHandler || modified) {
           let gpxTrackHandler = gpx.parse(additionalGpxElement.file.data);
           gpxTrackHandler.setStyle(() => style);
           gpxTrackHandler.addTo(this.mapHandler);
-          console.log("+++ updateGpxTracks add file.name: " + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
+          Logger.debug("+++ updateGpxTracks add file.name: " + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
           this.gpxTrackHandlerByElementId.set(
             additionalGpxElement.id,
             gpxTrackHandler
@@ -407,10 +402,10 @@ export class MapComponent implements AfterViewInit {
       let gpxHandler = this.gpxTrackHandlerByElementId.get(id);
       if (gpxHandler) {
         gpxHandler.remove();
-        console.log("+++ updateGpxTracks remove id:" + id);
+        Logger.debug("+++ updateGpxTracks remove id:" + id);
       }
       this.gpxTrackHandlerByElementId.delete(id);
-      console.log("+++ updateGpxTracks delete id:" + id);
+      Logger.debug("+++ updateGpxTracks delete id:" + id);
     });
   }
 
@@ -427,18 +422,16 @@ export class MapComponent implements AfterViewInit {
     additionalGpxElements: AdditionalGpxElement[]
   ) {
     // Log the incoming parameters
-    console.log("+++ Incoming Map Project ID:", mapProjectId);
+    Logger.debug("+++ Incoming Map Project ID:" + mapProjectId);
 
     // Log the size of the additionalGpxElements array
-    console.log(
-      "+++ Number of Additional GPX Elements:",
-      additionalGpxElements.length
+    Logger.debug(
+      "+++ Number of Additional GPX Elements:" + additionalGpxElements.length
     );
 
     // Use JSON.stringify to log the entire array (nicely formatted)
-    console.log(
-      "+++ Incoming Additional GPX Elements:",
-      JSON.stringify(additionalGpxElements, null, 2)
+    Logger.debug(
+      "+++ Incoming Additional GPX Elements:" + JSON.stringify(additionalGpxElements, null, 2)
     );
 
     let gpxElementIdsToRemove = new Set<string>(
@@ -448,17 +441,10 @@ export class MapComponent implements AfterViewInit {
     additionalGpxElements.forEach((additionalGpxElement) => {
       if (additionalGpxElement.file?.data) {
         // !!! hack
-        console.log(
+        Logger.debug(
           "+++ perhaps storing additionalGpxElement.file?.data ... mapProjectId: " +
             mapProjectId
-        );
-
-        if (false) {
-          this.jsonStorageService.storeJsonData(
-            additionalGpxElement.file?.name,
-            additionalGpxElement.file?.data
-          );
-        }
+        );        
 
         gpxElementIdsToRemove.delete(additionalGpxElement.id);
         let style = {
@@ -479,7 +465,7 @@ export class MapComponent implements AfterViewInit {
         if (!currentGpxTrackHandler || modified) {
           let gpxTrackHandler = gpx.parse(additionalGpxElement.file.data);
 
-          console.log(
+          Logger.debug(
             "+++ gpxTrackHandler.trk[0].name: " + gpxTrackHandler.trk[0].name
           );
 
@@ -508,14 +494,14 @@ export class MapComponent implements AfterViewInit {
           currentGpxTrackHandler.setStyle(() => style);
         }
       } else {
-        console.log(`+++ updateGpxTracks else`);
+        Logger.debug(`+++ updateGpxTracks else`);
       }
     });
 
     gpxElementIdsToRemove.forEach((id) => {
       let gpxHandler = this.gpxTrackHandlerByElementId.get(id);
       if (gpxHandler) {
-        console.log(`+++ updateGpxTracks remove id: ` + id);
+        Logger.debug(`+++ updateGpxTracks remove id: ` + id);
 
         //gpxHandler.remove();
       }

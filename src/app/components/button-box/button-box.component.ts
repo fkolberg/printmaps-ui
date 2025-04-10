@@ -1,3 +1,5 @@
+// button-box.component.ts
+
 import {Component, Inject, LOCALE_ID} from "@angular/core";
 import {MapProject} from "../../model/intern/map-project";
 import {Store} from "@ngrx/store";
@@ -7,6 +9,8 @@ import {currentMapProject} from "../../model/intern/printmaps-ui-state";
 import {MapProjectState} from "../../model/intern/map-project-state";
 import * as UiActions from "../../actions/main.actions";
 import {ConfigurationService} from "../../services/configuration.service";
+
+import {Logger, LogLevel} from "../../utils/logger.util";
 
 @Component({
     selector: "app-button-box",
@@ -48,7 +52,7 @@ export class ButtonBoxComponent {
 
     createMapProject() { 
         // Log the mapProject before dispatching the action
-        console.log('>>> Dispatching createMapProject from createMapProject in button-box.component.ts');
+        Logger.debug('>>> Dispatching createMapProject from createMapProject in button-box.component.ts');
         let name = $localize`New Map Project ${new Date().toLocaleString(this.locale)}`;
         this.store.dispatch(UiActions.createMapProject({name: name}));
     }

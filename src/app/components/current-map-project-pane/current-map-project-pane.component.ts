@@ -1,3 +1,5 @@
+// current-map-project-pane.component.ts
+
 import {Component, ViewChild} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {cloneDeep, isEqual} from "lodash";
@@ -17,6 +19,8 @@ import {MatExpansionPanel} from "@angular/material/expansion";
 import {AdditionalElementListComponent} from "../additional-element-list/additional-element-list.component";
 import {MatDialog} from "@angular/material/dialog";
 import {order} from "../../utils/common.util";
+
+import {Logger, LogLevel} from "../../utils/logger.util";
 
 @Component({
     selector: "app-current-map-project-pane",
@@ -53,7 +57,7 @@ export class CurrentMapProjectPaneComponent {
             .subscribe(nextValue => {
                 if (this.mapProject?.id && this.mapProject?.modifiedLocally && this.mapProject?.id != nextValue.id) {
                     // Log the mapProject to the console before dispatching the action
-                    console.log('>>> Dispatching upload for mapProject:', this.mapProject);
+                    Logger.debug('>>> Dispatching upload for mapProject:', this.mapProject);
                     store.dispatch(UiActions.uploadMapProject({mapProject: this.mapProject}));
                 }
                 this.mapProject = cloneDeep(nextValue);

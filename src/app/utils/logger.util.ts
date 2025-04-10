@@ -14,58 +14,58 @@ export enum LogLevel {
 
 export class Logger {
     private static configService: ConfigurationService;
+    private static loggingLevel: LogLevel = LogLevel.INFO; // default
 
     // Method to initialize the logger with ConfigurationService (Singleton pattern)
     static initialize(configService: ConfigurationService): void {
       if (!Logger.configService) {
         Logger.configService = configService;
+        Logger.loggingLevel = Logger.parseLogLevel(configService.appConf.loggingLevel);
       }
     }
 
-    // Log function that accepts the log level enum
-    static log(level: LogLevel, message: string): void {
-        
-        //const loggingLevel = Logger.configService.getLoggingLevel();
-        //const loggingLevel = Logger.configService.appConf.autoUploadIntervalInSeconds;
-        let loggingLevel = LogLevel.DEBUG;
-
-        if (loggingLevel !== LogLevel.DEBUG && level === LogLevel.DEBUG) {
-            // If in production mode, do not log DEBUG level messages
-            return;
+    private static parseLogLevel(value: string): LogLevel {
+        if (Object.values(LogLevel).includes(value as LogLevel)) {
+            return value as LogLevel;
         }
+        // Fallback to INFO or any default
+        return LogLevel.INFO;
+    }
+
+    // Log function that accepts the log level enum
+    static log(level: LogLevel, ...args: any[]): void {
+
+        // Temporarily add a guard in your logger to warn you when it’s not yet initialized:
+        if (!Logger.configService) {
+            console.warn('Logger not initialized. Call Logger.initialize(configService) before using it.');
+            return;
+        }      
+
+        // Don't log DEBUG in production
+        if (environment.production && level === LogLevel.DEBUG) {
+            return;
+    }
       
         // Check if logging is enabled based on the level and configuration
-        if (Logger.shouldLog(level, loggingLevel)) {
-            Logger.outputLog(level, message);
-        }
-        
-        if (environment.production) {
-            // console.log('App is running in production mode');
-            if (level !== LogLevel.DEBUG) {
-                this.outputLog(level, message);
-            }
-          } else {
-            // console.log('App is running in development mode');
-            this.outputLog(level, message);
-          }
-       
+        if (Logger.shouldLog(level, Logger.loggingLevel)) {
+            Logger.outputLog(level, ...args);
+        }           
     }
 
-    // Individual level shortcut functions
-    static trace(message: string): void {
-        Logger.log(LogLevel.TRACE, message);
+    static trace(...args: any[]): void {
+        Logger.log(LogLevel.TRACE, ...args);
     }
 
-    static debug(message: string): void {
-        Logger.log(LogLevel.DEBUG, message);
+    static debug(...args: any[]): void {
+        Logger.log(LogLevel.DEBUG, ...args);
     }
 
-    static info(message: string): void {
-        Logger.log(LogLevel.INFO, message);
+    static info(...args: any[]): void {
+        Logger.log(LogLevel.INFO, ...args);
     }
 
-    static error(message: string): void {
-        Logger.log(LogLevel.ERROR, message);
+    static error(...args: any[]): void {
+        Logger.log(LogLevel.ERROR, ...args);
     }
 
     // Determine if the log level should be logged based on the config level
@@ -75,7 +75,7 @@ export class Logger {
     }
 
     // Private function to output the log message to the console
-    private static outputLog(level: LogLevel, message: string): void {
+    private static outputLog(level: LogLevel, ...args: any[]): void {
         const timestamp = new Date().toISOString();
         const stack = new Error().stack;
         let callerInfo = '';
@@ -87,20 +87,21 @@ export class Logger {
             }
         }
 
-        const logMessage = `${timestamp} [${level}] ${callerInfo} - ${message}`;
+        const prefix = `${timestamp} [${level}] ${callerInfo} -`;
 
+        // Output to console with the correct method and all arguments
         switch (level) {
             case LogLevel.DEBUG:
-                console.debug(logMessage);
+                console.debug(prefix, ...args);
                 break;
             case LogLevel.INFO:
-                console.info(logMessage);
+                console.info(prefix, ...args);
                 break;
             case LogLevel.ERROR:
-                console.error(logMessage);
+                console.error(prefix, ...args);
                 break;
             case LogLevel.TRACE:
-                console.trace(logMessage);
+                console.trace(prefix, ...args);
                 break;
         }
     }
