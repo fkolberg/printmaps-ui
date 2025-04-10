@@ -51,6 +51,23 @@ export class Logger {
        
     }
 
+    // Individual level shortcut functions
+    static trace(message: string): void {
+        Logger.log(LogLevel.TRACE, message);
+    }
+
+    static debug(message: string): void {
+        Logger.log(LogLevel.DEBUG, message);
+    }
+
+    static info(message: string): void {
+        Logger.log(LogLevel.INFO, message);
+    }
+
+    static error(message: string): void {
+        Logger.log(LogLevel.ERROR, message);
+    }
+
     // Determine if the log level should be logged based on the config level
     private static shouldLog(level: LogLevel, configLevel: LogLevel): boolean {
         const levels = Object.values(LogLevel);
