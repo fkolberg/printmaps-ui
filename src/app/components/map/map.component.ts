@@ -91,7 +91,7 @@ export class MapComponent implements AfterViewInit {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors |' +
-        ' Rendering powered by <a href="http://printmaps-osm.de">printmaps-osm.de (Klaus Tockloth)</a>',
+        ' Rendering powered by <a href="http://printmaps-osm.de">printmaps-osm.de</a>',
     }).addTo(mapHandler);
   }
 
