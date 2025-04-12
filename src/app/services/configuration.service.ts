@@ -35,12 +35,12 @@ export class ConfigurationService {
                 xhr.open("GET", configFile);
                 xhr.addEventListener("readystatechange", () => {
                     if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-                        Logger.debug(`Successfully loaded configuration from '${configFile}'.`);
+                        console.log(`Successfully loaded configuration from '${configFile}'.`);
                         this.configuration = JSON.parse(xhr.responseText);
                         this.loaded = true;
                         resolve(this.configuration);
                     } else if (xhr.readyState === XMLHttpRequest.DONE) {
-                        Logger.debug(`Failed to load configuration. Check that a valid '${configFile}' file is provided.`);
+                        console.log(`Failed to load configuration. Check that a valid '${configFile}' file is provided.`);
                         reject();
                     }
                 });

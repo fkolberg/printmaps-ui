@@ -39,7 +39,7 @@ export class AppComponent implements OnInit {
         Logger.initialize(this.configService);
 
         // Now logging works
-        Logger.debug('App initialized');
+        //Logger.debug('>>> App initialized');
         
         this.store.dispatch(UiActions.init());
     }

@@ -65,7 +65,6 @@ function convertAdditionalTextElementToSymbolizer(templateService: TemplateServi
 }
 
 function convertAdditionalTrackElementToSymbolizer(_templateService: TemplateService, _mapProject: MapProject, element: AdditionalGpxElement): string {
-    //Logger.debug("****** convertAdditionalTrackElementToSymbolizer element.file.data:", element.file.data);
     let metadata: UserObjectMetadata = {
         ID: element.id,
         Type: element.type,
@@ -87,8 +86,7 @@ function convertAdditionalTrackElementToSymbolizer(_templateService: TemplateSer
 
         let result = `<!--${JSON.stringify(metadata)}--><LineSymbolizer stroke='${element.style.lineColor.rgbHexValue}' stroke-width='${element.style.lineWidth}' stroke-opacity='${element.style.lineColor.opacity}' stroke-linecap='round' stroke-linejoin='round' smooth='${smoothValue}' />`;
         
-        // da sollten jetzt die vielen Track-daten drin stehen
-        //Logger.debug("****** Generated Symbolizer String:", result);
+        // included track data
 
         return result;
     }    

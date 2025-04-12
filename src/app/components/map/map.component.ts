@@ -143,7 +143,6 @@ export class MapComponent implements AfterViewInit {
     whenever certain component properties change.
   */
   private bindToStore() {
-    Logger.debug(">>> bindToStore");
     // comment by Lucien Weller
     // TODO: refactor direct binding to store to make map component reusable
 
@@ -354,9 +353,8 @@ export class MapComponent implements AfterViewInit {
 
   // called from bindToStore (where listens for changes in currentAdditionalGpxElements)
   private updateGpxTracks(additionalGpxElements: AdditionalGpxElement[]) {
-    // Logger.debug("+++ updateGpxTracks for " + additionalGpxElements.length  + " tracks");
-    // Logger.debug(`+++ updateGpxTracks for ${additionalGpxElements.length} tracks`);
-    Logger.log(LogLevel.DEBUG, `updateGpxTracks for ${additionalGpxElements.length} tracks`);
+    
+    Logger.debug(`>>> updateGpxTracks for ${additionalGpxElements.length} tracks`);
 
     let gpxElementIdsToRemove = new Set<string>(
       this.gpxTrackHandlerByElementId.keys()
@@ -377,14 +375,14 @@ export class MapComponent implements AfterViewInit {
           new Date().getTime();
         let modified = additionalGpxElement.file.modified > lastUpdate;
         if (currentGpxTrackHandler && modified) {
-          Logger.debug("+++ updateGpxTracks remove file.name:" + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
+          Logger.trace(">>> updateGpxTracks remove file.name:" + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
           currentGpxTrackHandler.remove();
         }
         if (!currentGpxTrackHandler || modified) {
           let gpxTrackHandler = gpx.parse(additionalGpxElement.file.data);
           gpxTrackHandler.setStyle(() => style);
           gpxTrackHandler.addTo(this.mapHandler);
-          Logger.debug("+++ updateGpxTracks add file.name: " + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
+          Logger.trace(">>> updateGpxTracks add file.name: " + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
           this.gpxTrackHandlerByElementId.set(
             additionalGpxElement.id,
             gpxTrackHandler
@@ -402,13 +400,14 @@ export class MapComponent implements AfterViewInit {
       let gpxHandler = this.gpxTrackHandlerByElementId.get(id);
       if (gpxHandler) {
         gpxHandler.remove();
-        Logger.debug("+++ updateGpxTracks remove id:" + id);
+        Logger.trace(">>> updateGpxTracks remove id:" + id);
       }
       this.gpxTrackHandlerByElementId.delete(id);
-      Logger.debug("+++ updateGpxTracks delete id:" + id);
+      Logger.trace(">>> updateGpxTracks delete id:" + id);
     });
   }
 
+  // Hmmm ???
   /*
     // remove all layers
     this.mapHandler.eachLayer(function(layer) {
@@ -416,98 +415,6 @@ export class MapComponent implements AfterViewInit {
     });
 
   */
-
-  private test_updateGpxTracks(
-    mapProjectId: string,
-    additionalGpxElements: AdditionalGpxElement[]
-  ) {
-    // Log the incoming parameters
-    Logger.debug("+++ Incoming Map Project ID:" + mapProjectId);
-
-    // Log the size of the additionalGpxElements array
-    Logger.debug(
-      "+++ Number of Additional GPX Elements:" + additionalGpxElements.length
-    );
-
-    // Use JSON.stringify to log the entire array (nicely formatted)
-    Logger.debug(
-      "+++ Incoming Additional GPX Elements:" + JSON.stringify(additionalGpxElements, null, 2)
-    );
-
-    let gpxElementIdsToRemove = new Set<string>(
-      this.gpxTrackHandlerByElementId.keys()
-    );
-
-    additionalGpxElements.forEach((additionalGpxElement) => {
-      if (additionalGpxElement.file?.data) {
-        // !!! hack
-        Logger.debug(
-          "+++ perhaps storing additionalGpxElement.file?.data ... mapProjectId: " +
-            mapProjectId
-        );        
-
-        gpxElementIdsToRemove.delete(additionalGpxElement.id);
-        let style = {
-          weight: additionalGpxElement.style.lineWidth,
-          color: additionalGpxElement.style.lineColor.rgbHexValue,
-          opacity: additionalGpxElement.style.lineColor.opacity,
-        };
-        let currentGpxTrackHandler = this.gpxTrackHandlerByElementId.get(
-          additionalGpxElement.id
-        );
-        let lastUpdate =
-          this.gpxTrackLastUpdateByElementId.get(additionalGpxElement.id) ??
-          new Date().getTime();
-        let modified = additionalGpxElement.file.modified > lastUpdate;
-        if (currentGpxTrackHandler && modified) {
-          //currentGpxTrackHandler.remove();
-        }
-        if (!currentGpxTrackHandler || modified) {
-          let gpxTrackHandler = gpx.parse(additionalGpxElement.file.data);
-
-          Logger.debug(
-            "+++ gpxTrackHandler.trk[0].name: " + gpxTrackHandler.trk[0].name
-          );
-
-          gpxTrackHandler.setStyle(() => style);
-          gpxTrackHandler.addTo(this.mapHandler); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-          // Remove the GPX track from the map
-          //gpxTrackHandler.remove();
-
-          if (false) {
-            GpxDataMap.addGpxData(
-              gpxTrackHandler,
-              additionalGpxElement.file?.data
-            );
-          }
-
-          this.gpxTrackHandlerByElementId.set(
-            additionalGpxElement.id,
-            gpxTrackHandler
-          ); // !!!!!!!!!!!!!!!!!!!!!
-          this.gpxTrackLastUpdateByElementId.set(
-            additionalGpxElement.id,
-            additionalGpxElement.file.modified
-          );
-        } else {
-          currentGpxTrackHandler.setStyle(() => style);
-        }
-      } else {
-        Logger.debug(`+++ updateGpxTracks else`);
-      }
-    });
-
-    gpxElementIdsToRemove.forEach((id) => {
-      let gpxHandler = this.gpxTrackHandlerByElementId.get(id);
-      if (gpxHandler) {
-        Logger.debug(`+++ updateGpxTracks remove id: ` + id);
-
-        //gpxHandler.remove();
-      }
-      //this.gpxTrackHandlerByElementId.delete(id);
-    });
-  }
 
   private handleCenterCoordinatesUpdate(mapHandler: L.Map) {
     let endSyncModelToMap = new Subject();

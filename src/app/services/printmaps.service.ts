@@ -274,7 +274,7 @@ export class PrintmapsService {
             reader.onloadend = () => {
                 const responseText = reader.result as string;
 
-                Logger.debug("****** responseText: " + responseText);
+                Logger.trace(">>> responseText: " + responseText);
     
                 try {
                     let mapRenderingJob: MapRenderingJobDefinition;
@@ -284,8 +284,7 @@ export class PrintmapsService {
     
                     // If it's valid JSON, proceed as normal
                     const mapProject = this.fromMapRenderingJob(mapProjectName, mapRenderingJob);
-                    Logger.debug("****** mapProject: " + mapProject);
-    
+                    
                     // Now load the map project state (same as before)
                     this.loadMapProjectState(mapProject.id).pipe(
                         map(mapProjectState => {
@@ -410,11 +409,11 @@ export class PrintmapsService {
                                 }
                             ).pipe(
                                 tap((response) => {
-                                    Logger.debug('Response:' + response);  // Log the full response object
+                                    Logger.trace('>>> Response:' + response);  // Log the full response object
                                     if (response.status === 201) {
-                                        Logger.debug('UI file uploaded (201 Created)');
+                                        Logger.debug('>>> UI file uploaded (201 Created)');
                                     } else {
-                                        console.warn(`UI file upload returned: ${response.status}`);
+                                        console.warn(`>>> UI file upload returned: ${response.status}`);
                                     }
                                 }),
                                 mapTo(savedMapProjectWithState),  // Continue with savedMapProjectWithState
@@ -442,8 +441,6 @@ export class PrintmapsService {
 
     // Function to modify the payload by removing comments from UserObjects' Style fields
     modifyPayload(payload: any): any {
-        Logger.debug("****** modifiing payload ...");
-        Logger.log(LogLevel.DEBUG, 'modifiing payload ...');
         // Iterate over UserObjects and remove comments from the Style field
         if (payload.Data?.Attributes?.UserObjects) {
             payload.Data.Attributes.UserObjects.forEach((userObject: any) => {

@@ -91,8 +91,8 @@ export class GpxDataMap {
 
   // Add new GPX data to the map
   static addGpxData(key: string, gpxData: string): void {
-    Logger.debug(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz GpxDataMap addGpxData key: ` + key);
-    Logger.debug(`zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz GpxDataMap addGpxData gpxData: ` + gpxData);
+    Logger.trace(`>>> GpxDataMap addGpxData key: ` + key);
+    Logger.trace(`>>> GpxDataMap addGpxData gpxData: ` + gpxData);
     this.data.set(key, gpxData);
   }
 

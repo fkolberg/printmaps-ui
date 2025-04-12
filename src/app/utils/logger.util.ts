@@ -38,6 +38,7 @@ export class Logger {
         // Temporarily add a guard in your logger to warn you when it’s not yet initialized:
         if (!Logger.configService) {
             console.warn('Logger not initialized. Call Logger.initialize(configService) before using it.');
+            console.warn(...args);
             return;
         }      
 
