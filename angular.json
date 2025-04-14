@@ -26,7 +26,8 @@
             "assets": [
               "src/assets",
               "src/favicon.ico",
-              "src/local"
+              "src/local",
+              "src/marker-shadow.png"
             ],
             "styles": [
               "src/theming.scss"
