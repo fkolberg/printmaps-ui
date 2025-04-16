@@ -19,6 +19,7 @@ import {
 } from "rxjs/operators";
 import {Store} from "@ngrx/store";
 import {PrintmapsService} from "../services/printmaps.service";
+import {MapService} from "../services/map.service";
 import {currentMapProject, mapProjectReferences} from "../model/intern/printmaps-ui-state";
 import * as UiActions from "../actions/main.actions";
 import {of, timer, zip} from "rxjs";
@@ -185,12 +186,25 @@ export class MainEffects {
             )
     );
 
+    setZoomLevel$ = createEffect(
+        () =>
+          this.actions.pipe(
+            ofType(UiActions.setZoomLevel),
+            tap(({ zoomLevel }) => {
+              this.printmapsService.setZoom(zoomLevel);
+              this.mapService.setZoom(zoomLevel);
+            })
+          ),
+        { dispatch: false } // No further action dispatched
+      );
+
     constructor(
         private store: Store<any>,
         private actions: Actions,
         private readonly configurationService: ConfigurationService,
         private mapProjectReferenceService: MapProjectReferenceService,
-        private printmapsService: PrintmapsService
+        private printmapsService: PrintmapsService,
+        private mapService: MapService
     ) {
     }
 }

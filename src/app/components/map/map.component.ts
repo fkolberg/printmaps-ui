@@ -40,6 +40,7 @@ import {
 } from "../../model/intern/printmaps-ui-state";
 import { getScaleProperties, Scale } from "../../model/intern/scale";
 import { ConfigurationService } from "../../services/configuration.service";
+import { MapService } from "../../services/map.service";
 import { gpx } from "@mapbox/leaflet-omnivore";
 import { AdditionalGpxElement } from "../../model/intern/additional-element";
 import { GpxDataMap } from "./../../services/gpx-data-map.service";
@@ -80,9 +81,15 @@ export class MapComponent implements AfterViewInit {
   @Input() scale: Scale;
   @Subjectize("scale") scale$ = new ReplaySubject<Scale>(1);
 
+  // ✅ Zoom tracking additions
+  zoomLevel: number;
+  zoomLevel$ = new ReplaySubject<number>(1);
+  @Output() zoomLevelChange = new EventEmitter<number>();
+
   constructor(
     private readonly configurationService: ConfigurationService,
-    private store: Store<any>,    
+    private store: Store<any>,   
+    private mapService: MapService // <-- add this! 
   ) {
     this.bindToStore();
   }
@@ -102,8 +109,38 @@ export class MapComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+
+    Logger.info(`ngAfterViewInit`);
+
     let mapHandler = L.map("map", { zoom: 12 });
+
+    this.mapService.setMap(mapHandler);
+    /*
+      🧠 Bonus: Sync Zoom to Map on Init
+
+      After you've restored this.zoomLevel from the store, 
+      you could optionally apply it to the map when it's created in ngAfterViewInit:
+
+      let mapHandler = L.map("map", { zoom: this.zoomLevel ?? 12 });
+    */
     MapComponent.addOsmLayer(mapHandler);
+
+     // ✅ Track zoom level
+     this.zoomLevel = mapHandler.getZoom();
+     this.zoomLevel$.next(this.zoomLevel);
+     this.zoomLevelChange.emit(this.zoomLevel);
+ 
+     mapHandler.on("zoomend", () => {
+        this.zoomLevel = mapHandler.getZoom();
+        Logger.info(`>>> Zoom level changed to: ${this.zoomLevel}`);
+        this.zoomLevel$.next(this.zoomLevel);
+        this.zoomLevelChange.emit(this.zoomLevel);
+
+        // ✅ Dispatch to NgRx store
+        this.store.dispatch(
+          UiActions.updateZoomLevel({ zoomLevel: this.zoomLevel })
+        );
+     });
 
     let areaSelectHandler;
     let areaSelectHandlerSubscriptions = [];
@@ -178,6 +215,16 @@ export class MapComponent implements AfterViewInit {
             nextCurrentMapProject.center.latitude,
             nextCurrentMapProject.center.longitude
           );
+
+          // ✅ Restore zoom level from store or default to 12
+          this.zoomLevel = nextCurrentMapProject.zoomLevel ?? 12;         
+          this.zoomLevel$.next(this.zoomLevel);
+          this.zoomLevelChange.emit(this.zoomLevel);
+
+          Logger.info(`zoomLevel from store: ${this.zoomLevel}, map id: ${nextCurrentMapProject.id}`);
+         
+          this.store.dispatch(UiActions.setZoomLevel({ zoomLevel: this.zoomLevel }));
+
           let factor =
             getScaleProperties(nextCurrentMapProject.scale).reductionFactor /
             1000;
@@ -382,7 +429,7 @@ export class MapComponent implements AfterViewInit {
           let gpxTrackHandler = gpx.parse(additionalGpxElement.file.data);
           gpxTrackHandler.setStyle(() => style);
           gpxTrackHandler.addTo(this.mapHandler);
-          Logger.trace(">>> updateGpxTracks add file.name: " + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
+          Logger.info(">>> !!! updateGpxTracks to display track add file.name: " + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
           this.gpxTrackHandlerByElementId.set(
             additionalGpxElement.id,
             gpxTrackHandler
@@ -445,6 +492,12 @@ export class MapComponent implements AfterViewInit {
       );
     startSyncModelToMap.next();
     this.centerCoordinates$.next(this.centerCoordinates);
+
+    // Also sync zoom level if needed
+    Logger.info(">>> this.zoomLevel: " + this.zoomLevel);
+    if (mapHandler.getZoom() !== this.zoomLevel) {
+      mapHandler.setZoom(this.zoomLevel); // ⬅️ Sync initial zoom
+    }
   }
 
   private syncMapToModel(
@@ -454,6 +507,7 @@ export class MapComponent implements AfterViewInit {
   ) {
     fromEvent(mapHandler, "movestart")
       .pipe(
+        // tap(() => Logger.info("syncMapToModel movestart zoom " + mapHandler.getZoom())), // HACK !!!
         tap(() => endSyncModelToMap.next()),
         switchMap(() =>
           fromEvent(mapHandler, "move").pipe(
@@ -636,6 +690,7 @@ export class MapComponent implements AfterViewInit {
       this.selectedArea$,
     ])
       .pipe(
+        //tap(() => Logger.info("syncModelToAreaSelect zoom " + mapHandler.getZoom())), // HACK !!!
         filter(([active]) => !!active),
         map(
           ([_, leafletEvent, selectedAreaInM]) =>

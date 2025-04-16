@@ -23,6 +23,9 @@ export interface MapProject {
     options: MapOptions;
     additionalElements: AdditionalElement[];
     modifiedLocally: boolean;
+
+     // ✅ Add this line
+    zoomLevel: number;
 }
 
 export function toMapRenderingJobExecution(id: string): MapRenderingJobExecution {

@@ -47,7 +47,8 @@ const reducer = createReducer(initialState,
                     fileFormat: FileFormat.PNG,
                     mapStyle: MapStyle.OSM_CARTO
                 },
-                additionalElements: []
+                additionalElements: [],
+                zoomLevel: 12
 
             };
             return {
@@ -58,6 +59,51 @@ const reducer = createReducer(initialState,
                 }
             };
         }),
+
+        on(UiActions.updateZoomLevel, (state, { zoomLevel }) => {
+            const id = state.currentMapProject?.id;
+            Logger.info(`>>> reducer zoomLevel: ${zoomLevel}, map id: ${id}`);
+            
+            return {
+                ...state,
+                currentMapProject: {
+                    ...state.currentMapProject,
+                    zoomLevel: zoomLevel, // ✅ store zoom inside project
+                },
+            };
+        }),
+
+        /*
+          Optional: Shorter Version
+
+            You could even write it more concisely like this:
+
+            on(UiActions.updateZoomLevel, (state, { zoomLevel }) => ({
+                ...state,
+                currentMapProject: {
+                    ...state.currentMapProject,
+                    zoomLevel,
+                },
+            })),
+        */
+          
+    /*
+    5. Optionally: Read from Store on Init
+
+If you want to restore the zoom level from the store when initializing:
+
+this.store
+  .select(currentMapProject)
+  .pipe(
+    distinctUntilChanged((prev, curr) => isEqual(prev, curr))
+  )
+  .subscribe((project) => {
+    if (project) {
+      ...
+      this.zoomLevel = project.zoomLevel ?? 12;
+    }
+  });
+    */
 
     on(UiActions.copyMapProject,
         (state) => ({

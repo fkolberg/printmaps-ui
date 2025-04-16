@@ -58,6 +58,7 @@ export class CurrentMapProjectPaneComponent {
                 if (this.mapProject?.id && this.mapProject?.modifiedLocally && this.mapProject?.id != nextValue.id) {
                     // Log the mapProject to the console before dispatching the action
                     Logger.debug('>>> Dispatching upload for mapProject:', this.mapProject);
+                    Logger.info('>>> Dispatching upload for mapProject zoomLevel: ', this.mapProject.zoomLevel);
                     store.dispatch(UiActions.uploadMapProject({mapProject: this.mapProject}));
                 }
                 this.mapProject = cloneDeep(nextValue);

@@ -35,6 +35,7 @@ import {UserFile} from "../model/api/user-file";
 import {ScaleService} from "./scale.service";
 
 import {Logger, LogLevel} from "../utils/logger.util";
+import { updateZoomLevel } from "../actions/main.actions";
 
 const REQUEST_OPTIONS = {
     headers: new HttpHeaders({
@@ -234,9 +235,15 @@ export class PrintmapsService {
             return this.http.get(endpointUrl, { responseType: 'blob' })  // Expecting the response as a blob (binary data)
                 .pipe(
                     // Log the response from the first HTTP request
+                    /*
                     tap((responseBlob) => {
-                        Logger.debug('>>> Fetched MapRenderingJob from uidata endpoint: ' + responseBlob);
+                        Logger.debug('>>> Fetched MapRenderingJob from uidata endpoint: ' + responseBlob.text());
                     }),
+                    */
+                    tap(async (responseBlob) => {
+                        const text = await responseBlob.text(); // Reads the blob as string
+                        Logger.debug('>>> Fetched MapRenderingJob from uidata endpoint:\n' + text);
+                      }),
                     concatMap((responseBlob) => this.handleResponse(responseBlob, mapProjectReference.name)),  // Handle response (binary or JSON)
                     //catchError(() => EMPTY) 
                     // fallback to original code
@@ -285,6 +292,8 @@ export class PrintmapsService {
                     // If it's valid JSON, proceed as normal
                     const mapProject = this.fromMapRenderingJob(mapProjectName, mapRenderingJob);
                     
+                    Logger.info(">>> fromMapRenderingJob handleResponse mapProject: " + mapProject);
+
                     // Now load the map project state (same as before)
                     this.loadMapProjectState(mapProject.id).pipe(
                         map(mapProjectState => {
@@ -386,9 +395,19 @@ export class PrintmapsService {
                             Logger.debug(">>> updated mapProject.id: " + updatedMapProject.id); // Now the ID will be correct
                             Logger.debug(">>> savedMapProjectWithState.id: " + savedMapProjectWithState.id);
         
+                            Logger.debug(">>> updatedMapProject.zoomLevel: " + updatedMapProject.zoomLevel);
+        
+                            //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+                            let mapRenderingJob = this.toMapRenderingJob(updatedMapProject);
+                            let payload = {
+                                ...mapRenderingJob,  // Spread the properties of the mapRenderingJob object
+                                zoomLevel: updatedMapProject.zoomLevel
+                            }; 
+
                             // Create the contentBlob using the updated mapProject with the new ID
                             const contentBlob = new Blob(
-                                [JSON.stringify(this.toMapRenderingJob(updatedMapProject))],  // Use updated mapProject
+                                // [JSON.stringify(this.toMapRenderingJob(updatedMapProject))],  // Use updated mapProject
+                                [JSON.stringify(payload)],  // Use updated payload including zoomLevel 
                                 { type: 'application/json' }
                             );
         
@@ -494,6 +513,9 @@ export class PrintmapsService {
     }
 
     private fromMapRenderingJob(name: string, mapRenderingJob: MapRenderingJobDefinition): MapProject {
+        
+        Logger.info(">>> fromMapRenderingJob mapRenderingJob: " + JSON.stringify(mapRenderingJob, null, 2));
+        
         let data = mapRenderingJob.Data;
         let attributes = data.Attributes;
         let margins = mapRenderingJob.Data.Attributes.UserObjects
@@ -518,11 +540,15 @@ export class PrintmapsService {
             additionalElements: mapRenderingJob.Data.Attributes.UserObjects
                 .map(userObject => PrintmapsService.convertUserObjectToAdditionalElement(userObject))
                 .filter(additionalElement => !!additionalElement),
-            modifiedLocally: false
-        };
+            modifiedLocally: false,
+            zoomLevel: (mapRenderingJob as any).zoomLevel ?? 12
+        }
     }
 
     private toMapRenderingJob(mapProject: MapProject): MapRenderingJobDefinition {
+
+        Logger.info(">>> toMapRenderingJob mapProject.zoomLevel: " + mapProject.zoomLevel);
+
         let gpxTracks = mapProject.additionalElements
             .filter(element => element.type == AdditionalElementType.GPX_TRACK)
             .map(element => ADDITIONAL_ELEMENT_TYPES.get(element.type)
@@ -584,4 +610,8 @@ export class PrintmapsService {
                     }))
             );
     }
+
+    setZoom(zoomLevel: number): void {
+        Logger.debug(`>>>>>> printmaps.service zoomLevel: ${zoomLevel}`);
+      }
 }

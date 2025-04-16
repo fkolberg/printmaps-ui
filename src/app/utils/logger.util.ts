@@ -1,15 +1,15 @@
 // logger.ts
 
 import { environment } from '../../environments/environment';
-
 import { ConfigurationService } from '../services/configuration.service';
 
-// Define an enum for the log levels
+// Define an enum for the log levels including 'WARN'
 export enum LogLevel {
     TRACE = 'TRACE',
     DEBUG = 'DEBUG',
     INFO = 'INFO',
-    ERROR = 'ERROR',  
+    WARN = 'WARN',  // Added 'WARN' log level
+    ERROR = 'ERROR',
 }
 
 export class Logger {
@@ -40,17 +40,17 @@ export class Logger {
             console.warn('Logger not initialized. Call Logger.initialize(configService) before using it.');
             console.warn(...args);
             return;
-        }      
+        }
 
         // Don't log DEBUG in production
         if (environment.production && level === LogLevel.DEBUG) {
             return;
-    }
-      
+        }
+
         // Check if logging is enabled based on the level and configuration
         if (Logger.shouldLog(level, Logger.loggingLevel)) {
             Logger.outputLog(level, ...args);
-        }           
+        }
     }
 
     static trace(...args: any[]): void {
@@ -63,6 +63,10 @@ export class Logger {
 
     static info(...args: any[]): void {
         Logger.log(LogLevel.INFO, ...args);
+    }
+
+    static warn(...args: any[]): void {  // New method for warning logs
+        Logger.log(LogLevel.WARN, ...args);
     }
 
     static error(...args: any[]): void {
@@ -103,6 +107,9 @@ export class Logger {
                 break;
             case LogLevel.TRACE:
                 console.trace(prefix, ...args);
+                break;
+            case LogLevel.WARN:  // Added case for WARN log level
+                console.warn(prefix, ...args);
                 break;
         }
     }

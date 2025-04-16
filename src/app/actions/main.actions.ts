@@ -130,3 +130,13 @@ export const updateAdditionalElement = createAction(
     createActionType(SOURCE, "UPDATE_ADDITIONAL_ELEMENT"),
     props<{ element: AnyAdditionalElement }>()
 );
+
+export const updateZoomLevel = createAction(
+  '[Map] Update Zoom Level',
+  props<{ zoomLevel: number }>()
+);
+
+export const setZoomLevel = createAction(
+    '[Map] Set Zoom Level',
+    props<{ zoomLevel: number }>()
+  );

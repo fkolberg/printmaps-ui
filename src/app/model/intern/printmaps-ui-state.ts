@@ -45,3 +45,8 @@ export const currentAdditionalGpxElements = createSelector(currentAdditionalElem
 
 export const selectedAdditionalElementId = createSelector(printmapsUiState,
     (state) => state.selectedAdditionalElementId);
+
+export const zoomLevelSelector = createSelector(
+    printmapsUiState,
+    (state) => state.currentMapProject?.zoomLevel
+    );
