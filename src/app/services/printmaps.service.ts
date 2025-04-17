@@ -518,12 +518,14 @@ export class PrintmapsService {
     private fromMapRenderingJob(name: string, mapRenderingJob: MapRenderingJobDefinition): MapProject {
         
         Logger.debug(">>> printmaps.service in function fromMapRenderingJob mapRenderingJob: " + JSON.stringify(mapRenderingJob, null, 2));
-        
+        Logger.info(">>> printmaps.service in function fromMapRenderingJob mapRenderingJob zoomLevel: " + (mapRenderingJob as any).zoomLevel);
+       
         let data = mapRenderingJob.Data;
         let attributes = data.Attributes;
         let margins = mapRenderingJob.Data.Attributes.UserObjects
             .map(userObject => PrintmapsService.extractMargins(userObject))
             .filter(element => !!element)[0];
+            (mapRenderingJob as any).zoomLevel ?? 12
         return {
             id: data.ID,
             name: name,

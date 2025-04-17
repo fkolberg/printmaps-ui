@@ -154,7 +154,7 @@ export class MapComponent implements AfterViewInit {
     let areaSelectHandlerSubscriptions = [];    
     this.active$.subscribe((active) => {
       if (active) {
-        Logger.info("Conditional Area Selection Tool active: " + active);
+        Logger.debug("Conditional Area Selection Tool active: " + active);
         if (!areaSelectHandler) {
           areaSelectHandler = L.areaSelect({ keepAspectRatio: true });
           areaSelectHandler.addTo(mapHandler);
@@ -255,7 +255,7 @@ export class MapComponent implements AfterViewInit {
               rightMarginInMm: this.rightMarginInMm,
               scale: this.scale
           })
-      ));
+      ));      
     } else {
           // comment by Lucien Weller
         // TODO: refactor direct binding to store to make map component reusable
@@ -568,7 +568,7 @@ export class MapComponent implements AfterViewInit {
     endSyncModelToMap: Subject<any>
   ) {
     Logger.info(">>> syncModelToMap ...");
-    if (true) {
+    if (false) {
       // original
       startSyncModelToMap
             .pipe(switchMap(() => this.centerCoordinates$
@@ -584,7 +584,130 @@ export class MapComponent implements AfterViewInit {
         startSyncModelToMap.next();
         this.centerCoordinates$.next(this.centerCoordinates);   
     } else {
-      startSyncModelToMap
+      if (true) {
+        // ✅ Sync CENTER from model to map
+        /* 
+          startSyncModelToMap: 
+          This is a Subject or BehaviorSubject (or some other observable) 
+          that acts as the trigger for the synchronization process. 
+          Calling startSyncModelToMap.next() starts the synchronization flow.
+          When startSyncModelToMap emits a value, the observable pipeline 
+          (that follows .pipe(...)) will be triggered.
+        */
+        startSyncModelToMap
+        /* 
+          .pipe: 
+          This is an operator that allows you to chain multiple operators on an observable 
+          to transform the data or control the flow.
+        */
+        .pipe(
+          /*
+            switchMap(() => ...): 
+            switchMap is an RxJS operator that switches from one observable to another. 
+            In this case, it switches to this.centerCoordinates$, 
+            which is an observable that emits the map's center coordinates.
+            When startSyncModelToMap emits a value, it subscribes to this.centerCoordinates$.
+          */
+          switchMap(() =>
+            /*
+              this.centerCoordinates$:
+              This is an observable that emits the current map center coordinates (lat, lng). 
+              It’s presumably updated elsewhere in your code whenever the center coordinates change.
+              The switchMap operator subscribes to this.centerCoordinates$ 
+              and makes sure the map’s center is updated with these new coordinates.
+           */
+            this.centerCoordinates$
+            .pipe(
+              /* 
+                skip(1):
+                this operator is used to skip the first emission. 
+                It's typically used to ignore the initial value emitted by the observable 
+                (often the initial value of this.centerCoordinates$).
+                In this case, it skips the first emitted value 
+                so that it doesn't update the map with potentially stale or default coordinates 
+                when the sync starts.
+              */
+              skip(1),
+              /*
+                takeUntil(endSyncModelToMap):
+                This operator ensures that the observable will continue emitting values 
+                until endSyncModelToMap emits a value (or is completed).
+                Once endSyncModelToMap emits a value, 
+                the subscription to this.centerCoordinates$ will be unsubscribed, 
+                and synchronization will stop.
+              */
+              takeUntil(endSyncModelToMap),
+              /*
+                distinctUntilChanged((prev, next) => isEqual(prev, next)):
+                This operator ensures that only distinct (i.e., changed) values will trigger an update.
+                The isEqual function is used to perform a deep comparison 
+                between the previous and the next values. 
+                If the coordinates haven’t changed (i.e., isEqual returns true), 
+                the update will be skipped.
+                This prevents unnecessary updates to the map if the center coordinates are the same. 
+              */
+              distinctUntilChanged((prev, next) => isEqual(prev, next))
+            )
+          )
+        )
+        /*
+          subscribe((nextMapCenter) => {...}):
+          When a new center coordinate is emitted by this.centerCoordinates$ 
+          (and it’s different from the previous one), 
+          the subscribe block is triggered with nextMapCenter as the new coordinates.
+          Inside this block:
+            Logger.info(...) logs the new center coordinates to the console for debugging purposes.
+            mapHandler.panTo(nextMapCenter, { animate: false, noMoveStart: true }):
+            panTo(nextMapCenter) moves the map’s center to the new coordinates.
+            { animate: false } disables animation when panning to the new coordinates.
+            { noMoveStart: true } prevents triggering the moveStart event 
+             when panning (this can be useful to avoid triggering unnecessary events or reactions).
+        */
+        .subscribe((nextMapCenter) => {
+          Logger.info(
+            `>>> Sync center to map: lat=${nextMapCenter.lat}, lng=${nextMapCenter.lng}`
+          );
+          mapHandler.panTo(nextMapCenter, { animate: false, noMoveStart: true });
+        });
+
+        // ✅ Sync ZOOM from model to map
+        startSyncModelToMap
+          .pipe(
+            switchMap(() =>
+              this.zoomLevel$.pipe(
+                //skip(1), // Skip initial emission
+                tap((val) => {
+                  // Log the emitted zoom level to confirm it's being emitted
+                  Logger.info("*** zoomLevel$ emitted: ", val);
+                }),
+                takeUntil(endSyncModelToMap),
+                distinctUntilChanged() // Only emit when the zoom level changes
+              )
+            )
+          )
+          .subscribe((nextZoomLevel) => {
+            // Check if mapHandler is available
+            Logger.debug('Map handler available:', mapHandler);
+
+            if (mapHandler) {
+              Logger.info(`>>> Sync zoom to map: ${nextZoomLevel}`);
+              mapHandler.setZoom(nextZoomLevel, { animate: false });
+            } else {
+              Logger.error("Map handler is undefined or null");
+            }
+          });
+
+        // ✅ To start syncing (e.g., in ngAfterViewInit or after map init)
+        startSyncModelToMap.next();
+
+        // Optional: Push current values to begin with
+        this.centerCoordinates$.next(this.centerCoordinates);
+        this.zoomLevel$.next(this.zoomLevel);
+
+        // ✅ To stop syncing
+        // endSyncModelToMap.next();
+      } else {
+        startSyncModelToMap
         .pipe(
           /*
           tap(() => {  
@@ -640,6 +763,8 @@ export class MapComponent implements AfterViewInit {
         this.centerCoordinates$.next(this.centerCoordinates);
         this.zoomLevel$.next(this.zoomLevel);
       }
+      }
+      
   }
 
   private syncMapToModel(
