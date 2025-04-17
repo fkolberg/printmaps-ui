@@ -568,7 +568,7 @@ export class MapComponent implements AfterViewInit {
     endSyncModelToMap: Subject<any>
   ) {
     Logger.info(">>> syncModelToMap ...");
-    if (false) {
+    if (true) {
       // original
       startSyncModelToMap
             .pipe(switchMap(() => this.centerCoordinates$

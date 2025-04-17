@@ -15,7 +15,8 @@ import {
     map,
     mergeAll,
     switchMap,
-    takeWhile
+    takeWhile,
+    mergeMap
 } from "rxjs/operators";
 import {Store} from "@ngrx/store";
 import {PrintmapsService} from "../services/printmaps.service";
@@ -53,7 +54,8 @@ export class MainEffects {
             )
     );
 
-    loadMapProject = createEffect(
+    // original
+    llloadMapProject = createEffect(
         () => this.actions
             .pipe(
                 ofType(UiActions.loadMapProject),
@@ -61,6 +63,21 @@ export class MainEffects {
                 map(mapProject => UiActions.mapProjectLoaded({mapProject: mapProject}))
             )
     );
+    loadMapProject = createEffect(() =>
+        this.actions.pipe(
+          ofType(UiActions.loadMapProject),
+          switchMap(action =>
+            this.printmapsService.loadMapProject(action.mapProjectReference).pipe(
+              mergeMap((mapProject) => [
+                UiActions.mapProjectLoaded({ mapProject }),
+      
+                // Dispatch the zoom level from the loaded map project
+                UiActions.setZoomLevel({ zoomLevel: mapProject.zoomLevel ?? 12 })
+              ])
+            )
+          )
+        )
+      );
     loadMapProjectReferences = createEffect(
         () => this.actions
             .pipe(
@@ -191,9 +208,9 @@ export class MainEffects {
           this.actions.pipe(
             ofType(UiActions.setZoomLevel),
             tap(({ zoomLevel }) => {
-                Logger.warn("UiActions.setZoomLevel effect obsolet !");
+              Logger.info("UiActions.setZoomLevel effect zoomLevel: " + zoomLevel);
               //this.printmapsService.setZoom(zoomLevel);
-              //this.mapService.setZoom(zoomLevel);
+              this.mapService.setZoom(zoomLevel);
             })
           ),
         { dispatch: false } // No further action dispatched
