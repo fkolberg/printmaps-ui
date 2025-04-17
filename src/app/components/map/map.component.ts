@@ -86,6 +86,11 @@ export class MapComponent implements AfterViewInit {
   zoomLevel$ = new ReplaySubject<number>(1);
   @Output() zoomLevelChange = new EventEmitter<number>();
 
+  private lastZoomLevel?: number;
+
+  /* 
+    constructor() is called first – when Angular instantiates the component class.
+  */
   constructor(
     private readonly configurationService: ConfigurationService,
     private store: Store<any>,   
@@ -94,58 +99,62 @@ export class MapComponent implements AfterViewInit {
     this.bindToStore();
   }
 
-  private static addOsmLayer(mapHandler: L.Map) {
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors |' +
-        ' Rendering powered by <a href="http://printmaps-osm.de">printmaps-osm.de</a>',
-    }).addTo(mapHandler);
-  }
-
-  private static addTestLayer(mapHandler: L.Map) {
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "Test",
-    }).addTo(mapHandler);
-  }
-
+  
+ 
+  /* 
+    ngAfterViewInit() is called after the component's view (and all child views) 
+    has been fully initialized.
+    You're using it to set up the Leaflet map after the DOM element with id "map" exists.
+  */
   ngAfterViewInit(): void {
 
     Logger.info(`ngAfterViewInit`);
 
-    let mapHandler = L.map("map", { zoom: 12 });
+    let mapHandler = L.map("map", {
+      zoom: this.zoomLevel ?? 12,  // pull from store, fallback if needed
+    });
 
-    this.mapService.setMap(mapHandler);
+    // for future use
     /*
-      🧠 Bonus: Sync Zoom to Map on Init
-
-      After you've restored this.zoomLevel from the store, 
-      you could optionally apply it to the map when it's created in ngAfterViewInit:
-
-      let mapHandler = L.map("map", { zoom: this.zoomLevel ?? 12 });
+      setMap makes the map available through a service (likely used across other components/services).
     */
+    this.mapService.setMap(mapHandler);
+    
     MapComponent.addOsmLayer(mapHandler);
 
-     // ✅ Track zoom level
-     this.zoomLevel = mapHandler.getZoom();
-     this.zoomLevel$.next(this.zoomLevel);
-     this.zoomLevelChange.emit(this.zoomLevel);
- 
-     mapHandler.on("zoomend", () => {
+    // Track zoom level
+    if (true) {
+      // initialize local zoom state by pulling the initial zoom from the map
+      this.zoomLevel = mapHandler.getZoom();
+      // a Subject or BehaviorSubject for internal reactivity
+      this.zoomLevel$.next(this.zoomLevel);
+      // an @Output() for parent components to react.
+      this.zoomLevelChange.emit(this.zoomLevel);
+  
+      // Zoom Change Listener
+      mapHandler.on("zoomend", () => {
         this.zoomLevel = mapHandler.getZoom();
-        Logger.info(`>>> Zoom level changed to: ${this.zoomLevel}`);
+        Logger.info(`>>> Zoom level changed from ${this.lastZoomLevel} to: ${this.zoomLevel}`);
+        // Pushes the new value to internal observers & event emitters.
         this.zoomLevel$.next(this.zoomLevel);
         this.zoomLevelChange.emit(this.zoomLevel);
-
-        // ✅ Dispatch to NgRx store
+        
+        // Dispatches it to NgRx, which triggers reducer and updates global state.
         this.store.dispatch(
           UiActions.updateZoomLevel({ zoomLevel: this.zoomLevel })
         );
+        
      });
+    }
 
+    /*
+      Conditional Area Selection Tool
+    */
     let areaSelectHandler;
-    let areaSelectHandlerSubscriptions = [];
+    let areaSelectHandlerSubscriptions = [];    
     this.active$.subscribe((active) => {
       if (active) {
+        Logger.info("Conditional Area Selection Tool active: " + active);
         if (!areaSelectHandler) {
           areaSelectHandler = L.areaSelect({ keepAspectRatio: true });
           areaSelectHandler.addTo(mapHandler);
@@ -155,6 +164,7 @@ export class MapComponent implements AfterViewInit {
           );
         }
       } else {
+        Logger.info("Conditional Area Selection Tool active: " + active);
         if (areaSelectHandler) {
           areaSelectHandler.remove();
         }
@@ -180,222 +190,303 @@ export class MapComponent implements AfterViewInit {
     whenever certain component properties change.
   */
   private bindToStore() {
-    // comment by Lucien Weller
-    // TODO: refactor direct binding to store to make map component reusable
-
-    /*
-        Selecting the currentMapProject from the Store
-
-        Purpose: 
-        This part listens for changes in currentMapProject in the store, 
-        and whenever the state of currentMapProject changes, 
-        it updates the component properties 
-        (such as centerCoordinates, selectedArea, scale, and others) to reflect the new values.
-
-        Key points:
-        this.store.select(currentMapProject): This selects the current map project from the store.
-        distinctUntilChanged: Ensures the component only reacts to changes in the state 
-            that are different from the previous value. 
-            It prevents unnecessary updates when the state hasn't actually changed.
-        isEqual: A utility from lodash used to compare the current and previous values deeply.
-        When the map project exists (nextCurrentMapProject is truthy), 
-        it updates several properties such as the map's center coordinates, scale, and margins. 
-        If there is no map project, it resets the relevant properties to their defaults.
-    */
-    this.store
+    if (true) {
+      // original
+      // TODO: refactor direct binding to store to make map component reusable
+      this.store
       .select(currentMapProject)
       .pipe(
-        distinctUntilChanged((previousValue, nextValue) =>
-          isEqual(previousValue, nextValue)
-        )
+          distinctUntilChanged((previousValue, nextValue) =>
+              isEqual(previousValue, nextValue))
       )
-      .subscribe((nextCurrentMapProject) => {
-        if (nextCurrentMapProject) {
-          this.centerCoordinates = L.latLng(
-            nextCurrentMapProject.center.latitude,
-            nextCurrentMapProject.center.longitude
-          );
-
-          // ✅ Restore zoom level from store or default to 12
-          this.zoomLevel = nextCurrentMapProject.zoomLevel ?? 12;         
-          this.zoomLevel$.next(this.zoomLevel);
-          this.zoomLevelChange.emit(this.zoomLevel);
-
-          Logger.info(`zoomLevel from store: ${this.zoomLevel}, map id: ${nextCurrentMapProject.id}`);
-         
-          this.store.dispatch(UiActions.setZoomLevel({ zoomLevel: this.zoomLevel }));
-
-          let factor =
-            getScaleProperties(nextCurrentMapProject.scale).reductionFactor /
-            1000;
-          this.selectedArea = {
-            width:
-              (nextCurrentMapProject.widthInMm -
-                nextCurrentMapProject.leftMarginInMm -
-                nextCurrentMapProject.rightMarginInMm) *
-              factor,
-            height:
-              (nextCurrentMapProject.heightInMm -
-                nextCurrentMapProject.topMarginInMm -
-                nextCurrentMapProject.bottomMarginInMm) *
-              factor,
-          };
-          this.topMarginInMm = nextCurrentMapProject.topMarginInMm;
-          this.bottomMarginInMm = nextCurrentMapProject.bottomMarginInMm;
-          this.leftMarginInMm = nextCurrentMapProject.leftMarginInMm;
-          this.rightMarginInMm = nextCurrentMapProject.rightMarginInMm;
-          this.scale = nextCurrentMapProject.scale;
-          this.active = true;
-        } else {
-          this.active = false;
-          if (!this.centerCoordinates) {
-            let defaultCoordinates =
-              this.configurationService.appConf.defaultCoordinates;
-            this.centerCoordinates = L.latLng(
-              defaultCoordinates.latitude,
-              defaultCoordinates.longitude
-            );
+      .subscribe(nextCurrentMapProject => {
+          if (nextCurrentMapProject) {
+              this.centerCoordinates = L.latLng(nextCurrentMapProject.center.latitude, nextCurrentMapProject.center.longitude);
+              let factor = getScaleProperties(nextCurrentMapProject.scale).reductionFactor / 1000;
+              this.selectedArea = {
+                  width: (nextCurrentMapProject.widthInMm - nextCurrentMapProject.leftMarginInMm - nextCurrentMapProject.rightMarginInMm) * factor,
+                  height: (nextCurrentMapProject.heightInMm - nextCurrentMapProject.topMarginInMm - nextCurrentMapProject.bottomMarginInMm) * factor
+              };
+              this.topMarginInMm = nextCurrentMapProject.topMarginInMm;
+              this.bottomMarginInMm = nextCurrentMapProject.bottomMarginInMm;
+              this.leftMarginInMm = nextCurrentMapProject.leftMarginInMm;
+              this.rightMarginInMm = nextCurrentMapProject.rightMarginInMm;
+              this.scale = nextCurrentMapProject.scale;
+              this.active = true;
+          } else {
+              this.active = false;
+              if (!this.centerCoordinates) {
+                  let defaultCoordinates = this.configurationService.appConf.defaultCoordinates;
+                  this.centerCoordinates =
+                      L.latLng(defaultCoordinates.latitude, defaultCoordinates.longitude);
+              }
+              this.selectedArea = undefined;
+              this.scale = undefined;
           }
-          this.selectedArea = undefined;
-          this.scale = undefined;
-        }
       });
-
-    /*
-        Selecting currentAdditionalGpxElements from the Store
-
-        Purpose: 
-        This part listens for changes in currentAdditionalGpxElements in the store 
-        and updates the GPX tracks on the map whenever they change.
-
-        Key points:
-        this.store.select(currentAdditionalGpxElements): Selects the GPX elements from the store.
-        this.updateGpxTracks(additionalGpxElements): 
-            Calls a method to update the GPX tracks on the map with the new GPX data.
-    */
-    /*
-        this.store.select(currentAdditionalGpxElements):
-            This is selecting the currentAdditionalGpxElements from the NgRx store. 
-            this.store is the instance of the Store service in Angular, 
-            which provides access to the application state.
-            The select() method is used to subscribe to a specific slice of the state, 
-            in this case, the currentAdditionalGpxElements. 
-            It allows you to get a stream of updates to that state.
-        
-        .subscribe((additionalGpxElements) => { ... }):
-            After selecting the state (currentAdditionalGpxElements), 
-            .subscribe() is used to listen to any changes in that part of the store. 
-            When the currentAdditionalGpxElements state changes, 
-            the callback function inside subscribe gets triggered.
-            The argument additionalGpxElements inside the callback 
-            represents the current value of currentAdditionalGpxElements 
-            from the store at that moment. 
-            This will be passed each time the state is updated.
-
-        Logger.debug(...):
-            This logs a message to the console every time the currentAdditionalGpxElements changes. 
-            It appears to be primarily for debugging purposes 
-            and allows you to observe when this part of the state is updated.
-
-        this.updateGpxTracks(additionalGpxElements):
-            After logging the state, the code calls this.updateGpxTracks(additionalGpxElements) 
-            with the latest additionalGpxElements.
-            This suggests that the method updateGpxTracks is responsible 
-            for updating or rendering GPX tracks on a map 
-            or processing the additionalGpxElements in some other way.
-            The method likely takes the additionalGpxElements data 
-            and uses it to update the UI (for example, plotting the GPX tracks on a map).
-    */
-    /*
-        What Happens When the State Changes?
-            
-        Whenever the currentAdditionalGpxElements in the store is updated:
-            The select() method fetches the new value of currentAdditionalGpxElements.
-            The subscribe() callback is triggered, 
-            and the new value of additionalGpxElements is passed to the callback function.
-            The console.log prints a message showing that the store has been updated.
-            The updateGpxTracks() method is called to update the GPX tracks based on the new data.
-    */
-    /*
-    this.store
-      .select(currentAdditionalGpxElements)
-      .subscribe((additionalGpxElements) => {
-        this.updateGpxTracks(additionalGpxElements);
-      });
-    */
-    /*
-      Ah, I see! 
-      You want to pass both the id of the currentMapProject 
-      and the additionalGpxElements to the updateGpxTracks method.
-      You can achieve this by subscribing to both the currentMapProject 
-      and the currentAdditionalGpxElements from the store, 
-      and passing both values together to the updateGpxTracks method.
-    */
-    // Subscribe to both observables
-    this.store
-      .select(currentMapProject) // Select currentMapProject from the store
+  this.store.select(currentAdditionalGpxElements).subscribe(additionalGpxElements => {
+      this.updateGpxTracks(additionalGpxElements);
+  });
+  this.centerCoordinatesChange
       .pipe(
-        filter((currentMapProject) => !!currentMapProject) // Ensure the map project exists
+          distinctUntilChanged((previousValue, nextValue) =>
+              isEqual(previousValue, nextValue))
       )
-      .subscribe((currentMapProject) => {
-        // Select additionalGpxElements from the store
-        this.store
-          .select(currentAdditionalGpxElements) // Select the additionalGpxElements from the store
-          .pipe(
-            filter((additionalGpxElements) => !!additionalGpxElements) // Ensure that additionalGpxElements exist
-          )
-          .subscribe((additionalGpxElements) => {
-            // Now, call updateGpxTracks with both the id and the additionalGpxElements
-            if (currentMapProject && additionalGpxElements) {
-              const mapProjectId = currentMapProject.id;
-              this.updateGpxTracks(additionalGpxElements);
-              //this.test_updateGpxTracks(mapProjectId, additionalGpxElements);
-            }
-          });
-      });
-
-    /*
-      Handling centerCoordinatesChange
-    */
-    this.centerCoordinatesChange
-      .pipe(
-        distinctUntilChanged((previousValue, nextValue) =>
-          isEqual(previousValue, nextValue)
-        )
-      )
-      .subscribe((nextCenterCoordinates) =>
-        this.store.dispatch(
+      .subscribe(nextCenterCoordinates => this.store.dispatch(
           UiActions.updateCenterCoordinates({
-            center: {
-              latitude: nextCenterCoordinates.lat,
-              longitude: nextCenterCoordinates.lng,
-            },
+              center: {
+                  latitude: nextCenterCoordinates.lat,
+                  longitude: nextCenterCoordinates.lng
+              }
           })
-        )
-      );
-
-    /*
-      Handling selectedAreaChange
-    */
-    this.selectedAreaChange
+      ));
+  this.selectedAreaChange
       .pipe(
-        distinctUntilChanged((previousValue, nextValue) =>
-          isEqual(previousValue, nextValue)
-        )
+          distinctUntilChanged((previousValue, nextValue) =>
+              isEqual(previousValue, nextValue))
       )
-      .subscribe((nextSelectedAreaInM) =>
-        this.store.dispatch(
+      .subscribe(nextSelectedAreaInM => this.store.dispatch(
           UiActions.updateSelectedArea({
-            widthInM: nextSelectedAreaInM.width,
-            heightInM: nextSelectedAreaInM.height,
-            topMarginInMm: this.topMarginInMm,
-            bottomMarginInMm: this.bottomMarginInMm,
-            leftMarginInMm: this.leftMarginInMm,
-            rightMarginInMm: this.rightMarginInMm,
-            scale: this.scale,
+              widthInM: nextSelectedAreaInM.width,
+              heightInM: nextSelectedAreaInM.height,
+              topMarginInMm: this.topMarginInMm,
+              bottomMarginInMm: this.bottomMarginInMm,
+              leftMarginInMm: this.leftMarginInMm,
+              rightMarginInMm: this.rightMarginInMm,
+              scale: this.scale
           })
+      ));
+    } else {
+          // comment by Lucien Weller
+        // TODO: refactor direct binding to store to make map component reusable
+
+        /*
+            Selecting the currentMapProject from the Store
+
+            Purpose: 
+            This part listens for changes in currentMapProject in the store, 
+            and whenever the state of currentMapProject changes, 
+            it updates the component properties 
+            (such as centerCoordinates, selectedArea, scale, and others) to reflect the new values.
+
+            Key points:
+            this.store.select(currentMapProject): This selects the current map project from the store.
+            distinctUntilChanged: Ensures the component only reacts to changes in the state 
+                that are different from the previous value. 
+                It prevents unnecessary updates when the state hasn't actually changed.
+            isEqual: A utility from lodash used to compare the current and previous values deeply.
+            When the map project exists (nextCurrentMapProject is truthy), 
+            it updates several properties such as the map's center coordinates, scale, and margins. 
+            If there is no map project, it resets the relevant properties to their defaults.
+        */
+        this.store
+        .select(currentMapProject)
+        .pipe(
+          distinctUntilChanged((previousValue, nextValue) =>
+            isEqual(previousValue, nextValue)
+          )
         )
-      );
+        .subscribe((nextCurrentMapProject) => {
+          if (nextCurrentMapProject) {
+            this.centerCoordinates = L.latLng(
+              nextCurrentMapProject.center.latitude,
+              nextCurrentMapProject.center.longitude
+            );
+
+            /*
+            // ✅ Restore zoom level from store or default to 12
+            this.zoomLevel = nextCurrentMapProject.zoomLevel ?? 12;       
+            // ✅ ADD THIS: Immediately push zoom level to the subject
+            Logger.info(`>>> [Store] pushing zoomLevel: ${this.zoomLevel}`);
+            this.zoomLevel$.next(this.zoomLevel);
+            this.zoomLevelChange.emit(this.zoomLevel);
+            */
+          if (true) {
+            const newZoomLevel = nextCurrentMapProject.zoomLevel ?? 12;
+
+          if (newZoomLevel !== this.lastZoomLevel) {
+            Logger.info(`>>> [Store] pushing zoomLevel: ${newZoomLevel}`);
+            this.zoomLevel$.next(newZoomLevel);
+            this.zoomLevelChange.emit(newZoomLevel);
+            this.lastZoomLevel = newZoomLevel;
+          }
+
+            this.zoomLevel = newZoomLevel;
+          }
+
+            let factor =
+              getScaleProperties(nextCurrentMapProject.scale).reductionFactor /
+              1000;
+            this.selectedArea = {
+              width:
+                (nextCurrentMapProject.widthInMm -
+                  nextCurrentMapProject.leftMarginInMm -
+                  nextCurrentMapProject.rightMarginInMm) *
+                factor,
+              height:
+                (nextCurrentMapProject.heightInMm -
+                  nextCurrentMapProject.topMarginInMm -
+                  nextCurrentMapProject.bottomMarginInMm) *
+                factor,
+            };
+            this.topMarginInMm = nextCurrentMapProject.topMarginInMm;
+            this.bottomMarginInMm = nextCurrentMapProject.bottomMarginInMm;
+            this.leftMarginInMm = nextCurrentMapProject.leftMarginInMm;
+            this.rightMarginInMm = nextCurrentMapProject.rightMarginInMm;
+            this.scale = nextCurrentMapProject.scale;
+            this.active = true;
+          } else {
+            this.active = false;
+            if (!this.centerCoordinates) {
+              let defaultCoordinates =
+                this.configurationService.appConf.defaultCoordinates;
+              this.centerCoordinates = L.latLng(
+                defaultCoordinates.latitude,
+                defaultCoordinates.longitude
+              );
+            }
+            this.selectedArea = undefined;
+            this.scale = undefined;
+          }
+        });
+
+      /*
+          Selecting currentAdditionalGpxElements from the Store
+
+          Purpose: 
+          This part listens for changes in currentAdditionalGpxElements in the store 
+          and updates the GPX tracks on the map whenever they change.
+
+          Key points:
+          this.store.select(currentAdditionalGpxElements): Selects the GPX elements from the store.
+          this.updateGpxTracks(additionalGpxElements): 
+              Calls a method to update the GPX tracks on the map with the new GPX data.
+      */
+      /*
+          this.store.select(currentAdditionalGpxElements):
+              This is selecting the currentAdditionalGpxElements from the NgRx store. 
+              this.store is the instance of the Store service in Angular, 
+              which provides access to the application state.
+              The select() method is used to subscribe to a specific slice of the state, 
+              in this case, the currentAdditionalGpxElements. 
+              It allows you to get a stream of updates to that state.
+          
+          .subscribe((additionalGpxElements) => { ... }):
+              After selecting the state (currentAdditionalGpxElements), 
+              .subscribe() is used to listen to any changes in that part of the store. 
+              When the currentAdditionalGpxElements state changes, 
+              the callback function inside subscribe gets triggered.
+              The argument additionalGpxElements inside the callback 
+              represents the current value of currentAdditionalGpxElements 
+              from the store at that moment. 
+              This will be passed each time the state is updated.
+
+          Logger.debug(...):
+              This logs a message to the console every time the currentAdditionalGpxElements changes. 
+              It appears to be primarily for debugging purposes 
+              and allows you to observe when this part of the state is updated.
+
+          this.updateGpxTracks(additionalGpxElements):
+              After logging the state, the code calls this.updateGpxTracks(additionalGpxElements) 
+              with the latest additionalGpxElements.
+              This suggests that the method updateGpxTracks is responsible 
+              for updating or rendering GPX tracks on a map 
+              or processing the additionalGpxElements in some other way.
+              The method likely takes the additionalGpxElements data 
+              and uses it to update the UI (for example, plotting the GPX tracks on a map).
+      */
+      /*
+          What Happens When the State Changes?
+              
+          Whenever the currentAdditionalGpxElements in the store is updated:
+              The select() method fetches the new value of currentAdditionalGpxElements.
+              The subscribe() callback is triggered, 
+              and the new value of additionalGpxElements is passed to the callback function.
+              The console.log prints a message showing that the store has been updated.
+              The updateGpxTracks() method is called to update the GPX tracks based on the new data.
+      */
+      /*
+      this.store
+        .select(currentAdditionalGpxElements)
+        .subscribe((additionalGpxElements) => {
+          this.updateGpxTracks(additionalGpxElements);
+        });
+      */
+      /*
+        Ah, I see! 
+        You want to pass both the id of the currentMapProject 
+        and the additionalGpxElements to the updateGpxTracks method.
+        You can achieve this by subscribing to both the currentMapProject 
+        and the currentAdditionalGpxElements from the store, 
+        and passing both values together to the updateGpxTracks method.
+      */
+      // Subscribe to both observables
+      this.store
+        .select(currentMapProject) // Select currentMapProject from the store
+        .pipe(
+          filter((currentMapProject) => !!currentMapProject) // Ensure the map project exists
+        )
+        .subscribe((currentMapProject) => {
+          // Select additionalGpxElements from the store
+          this.store
+            .select(currentAdditionalGpxElements) // Select the additionalGpxElements from the store
+            .pipe(
+              filter((additionalGpxElements) => !!additionalGpxElements) // Ensure that additionalGpxElements exist
+            )
+            .subscribe((additionalGpxElements) => {
+              // Now, call updateGpxTracks with both the id and the additionalGpxElements
+              if (currentMapProject && additionalGpxElements) {
+                const mapProjectId = currentMapProject.id;
+                this.updateGpxTracks(additionalGpxElements);
+                //this.test_updateGpxTracks(mapProjectId, additionalGpxElements);
+              }
+            });
+        });
+
+      /*
+        Handling centerCoordinatesChange
+      */
+      this.centerCoordinatesChange
+        .pipe(
+          distinctUntilChanged((previousValue, nextValue) =>
+            isEqual(previousValue, nextValue)
+          )
+        )
+        .subscribe((nextCenterCoordinates) =>
+          this.store.dispatch(
+            UiActions.updateCenterCoordinates({
+              center: {
+                latitude: nextCenterCoordinates.lat,
+                longitude: nextCenterCoordinates.lng,
+              },
+            })
+          )
+        );
+
+      /*
+        Handling selectedAreaChange
+      */
+      this.selectedAreaChange
+        .pipe(
+          distinctUntilChanged((previousValue, nextValue) =>
+            isEqual(previousValue, nextValue)
+          )
+        )
+        .subscribe((nextSelectedAreaInM) =>
+          this.store.dispatch(
+            UiActions.updateSelectedArea({
+              widthInM: nextSelectedAreaInM.width,
+              heightInM: nextSelectedAreaInM.height,
+              topMarginInMm: this.topMarginInMm,
+              bottomMarginInMm: this.bottomMarginInMm,
+              leftMarginInMm: this.leftMarginInMm,
+              rightMarginInMm: this.rightMarginInMm,
+              scale: this.scale,
+            })
+          )
+        );
+      
+    }
   }
 
   // called from bindToStore (where listens for changes in currentAdditionalGpxElements)
@@ -464,6 +555,7 @@ export class MapComponent implements AfterViewInit {
   */
 
   private handleCenterCoordinatesUpdate(mapHandler: L.Map) {
+    Logger.info(">>> map.component in function handleCenterCoordinatesUpdate");
     let endSyncModelToMap = new Subject();
     let startSyncModelToMap = new Subject();
     this.syncModelToMap(mapHandler, startSyncModelToMap, endSyncModelToMap);
@@ -475,29 +567,79 @@ export class MapComponent implements AfterViewInit {
     startSyncModelToMap: Subject<any>,
     endSyncModelToMap: Subject<any>
   ) {
-    startSyncModelToMap
-      .pipe(
-        switchMap(() =>
-          this.centerCoordinates$.pipe(
-            skip(1),
-            takeUntil(endSyncModelToMap),
-            distinctUntilChanged((previousValue, nextValue) =>
-              isEqual(previousValue, nextValue)
+    Logger.info(">>> syncModelToMap ...");
+    if (true) {
+      // original
+      startSyncModelToMap
+            .pipe(switchMap(() => this.centerCoordinates$
+                    .pipe(
+                        skip(1),
+                        takeUntil(endSyncModelToMap),
+                        distinctUntilChanged((previousValue, nextValue) =>
+                            isEqual(previousValue, nextValue))
+                    )
+                )
             )
+            .subscribe(nextMapCenter => mapHandler.panTo(nextMapCenter, {noMoveStart: true}));
+        startSyncModelToMap.next();
+        this.centerCoordinates$.next(this.centerCoordinates);   
+    } else {
+      startSyncModelToMap
+        .pipe(
+          /*
+          tap(() => {  
+            const zoom = mapHandler.getZoom();
+            Logger.info(
+              `*** syncModelToMap mapHandler.getZoom(): ${zoom}}`
+            );
+          }),
+          */
+         /*
+          tap(() => {  
+            const center = mapHandler.getCenter();
+            Logger.info(
+              `*** syncModelToMap mapHandler.getCenter(): ${center}}`
+            );
+          }),
+          */
+
+          // Combine both centerCoordinates$ and zoomLevel$
+          switchMap(() =>
+            combineLatest([
+              this.centerCoordinates$.pipe(
+                //skip(1),
+                takeUntil(endSyncModelToMap),
+                distinctUntilChanged((a, b) => isEqual(a, b))
+              ),
+              this.zoomLevel$.pipe(
+                skip(1),
+                takeUntil(endSyncModelToMap)
+              )
+            ])
           )
         )
-      )
-      .subscribe((nextMapCenter) =>
-        mapHandler.panTo(nextMapCenter, { noMoveStart: true })
-      );
-    startSyncModelToMap.next();
-    this.centerCoordinates$.next(this.centerCoordinates);
-
-    // Also sync zoom level if needed
-    Logger.info(">>> this.zoomLevel: " + this.zoomLevel);
-    if (mapHandler.getZoom() !== this.zoomLevel) {
-      mapHandler.setZoom(this.zoomLevel); // ⬅️ Sync initial zoom
-    }
+        .subscribe(([nextMapCenter, zoomLevel]) => {
+          Logger.info(`>>> panTo() called with lat=${nextMapCenter.lat}, lng=${nextMapCenter.lng}`);
+          Logger.info(`>>> mapHandler.getZoom()=${mapHandler.getZoom()}`);
+          Logger.info(`>>> expected zoomLevel=${zoomLevel}`);
+    
+          // Pan to the new center
+          mapHandler.panTo(nextMapCenter, { noMoveStart: true });
+    
+          // Apply zoom if needed
+          if (mapHandler.getZoom() !== zoomLevel) {
+            Logger.info(`>>> setting zoomLevel to ${zoomLevel}`);
+            mapHandler.setZoom(zoomLevel);
+          }
+        });
+    
+        // Trigger initial emission
+        startSyncModelToMap.next();
+      
+        // Push current state to subjects
+        this.centerCoordinates$.next(this.centerCoordinates);
+        this.zoomLevel$.next(this.zoomLevel);
+      }
   }
 
   private syncMapToModel(
@@ -505,9 +647,30 @@ export class MapComponent implements AfterViewInit {
     startSyncModelToMap: Subject<any>,
     endSyncModelToMap: Subject<any>
   ) {
-    fromEvent(mapHandler, "movestart")
+    Logger.info(">>> syncMapToModel ...");
+    if (false) {
+      // original
+      fromEvent(mapHandler, "movestart")
+            .pipe(
+                tap(() => endSyncModelToMap.next()),
+                switchMap(() => fromEvent(mapHandler, "move")
+                    .pipe(
+                        takeUntil(fromEvent(mapHandler, "moveend").pipe(bufferCount(1))),
+                        finalize(() => startSyncModelToMap.next())
+                    )
+                ),
+                map(event => (event as L.LeafletEvent).target.getCenter())
+            )
+            .subscribe(nextCenterCoordinates => {
+                if (!isEqual(this.centerCoordinates, nextCenterCoordinates)) {
+                    this.centerCoordinates = nextCenterCoordinates;
+                    this.centerCoordinatesChange.emit(nextCenterCoordinates);
+                }
+            });
+    } else {
+      fromEvent(mapHandler, "movestart")
       .pipe(
-        // tap(() => Logger.info("syncMapToModel movestart zoom " + mapHandler.getZoom())), // HACK !!!
+        tap(() => Logger.info("*** syncMapToModel mapHandler.getZoom(): " + mapHandler.getZoom())),
         tap(() => endSyncModelToMap.next()),
         switchMap(() =>
           fromEvent(mapHandler, "move").pipe(
@@ -523,6 +686,7 @@ export class MapComponent implements AfterViewInit {
           this.centerCoordinatesChange.emit(nextCenterCoordinates);
         }
       });
+    }
   }
 
   private handleSelectedAreaUpdate(
@@ -710,5 +874,13 @@ export class MapComponent implements AfterViewInit {
       .subscribe((nextAreaSelectDimensionInPx) =>
         areaSelectHandler.setDimensions(nextAreaSelectDimensionInPx)
       );
+  }
+
+  private static addOsmLayer(mapHandler: L.Map) {
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors |' +
+        ' Rendering powered by <a href="http://printmaps-osm.de">printmaps-osm.de</a>',
+    }).addTo(mapHandler);
   }
 }

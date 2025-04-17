@@ -16,10 +16,12 @@ export class MapService {
   setZoom(zoomLevel: number) {
     Logger.debug(`>>>>>> map.service this.map.getZoom(): ` + this.map.getZoom());
     Logger.debug(`>>>>>> map.service zoomLevel: ${zoomLevel}`);
+    /*  */
     if (this.map && this.map.getZoom() !== zoomLevel) {        
         this.map.setZoom(zoomLevel);
     } else {
         Logger.debug(`>>>>>> NOP`);
     }
+   
   }
 }

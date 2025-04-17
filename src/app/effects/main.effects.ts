@@ -191,8 +191,9 @@ export class MainEffects {
           this.actions.pipe(
             ofType(UiActions.setZoomLevel),
             tap(({ zoomLevel }) => {
-              this.printmapsService.setZoom(zoomLevel);
-              this.mapService.setZoom(zoomLevel);
+                Logger.warn("UiActions.setZoomLevel effect obsolet !");
+              //this.printmapsService.setZoom(zoomLevel);
+              //this.mapService.setZoom(zoomLevel);
             })
           ),
         { dispatch: false } // No further action dispatched

@@ -254,6 +254,7 @@ export class PrintmapsService {
                         let endpointUrlOriginal = `${this.baseUrl}/metadata/${mapProjectReference.id}`;
                         return this.http.get<MapRenderingJobDefinition>(endpointUrlOriginal)
                             .pipe(
+                                tap(() => Logger.info("map.component loadMapProject fromMapRenderingJob ..." )),
                                 map(mapRenderingJob => this.fromMapRenderingJob(mapProjectReference.name, mapRenderingJob)),
                                 concatMap(mapProject =>
                                     this.loadMapProjectState(mapProject.id)
@@ -290,9 +291,10 @@ export class PrintmapsService {
                     mapRenderingJob = JSON.parse(responseText);
     
                     // If it's valid JSON, proceed as normal
+                    Logger.info(">>> printmaps.service handleResponse before fromMapRenderingJob ...");
                     const mapProject = this.fromMapRenderingJob(mapProjectName, mapRenderingJob);
-                    
-                    Logger.info(">>> fromMapRenderingJob handleResponse mapProject: " + mapProject);
+                    Logger.debug(">>> printmaps.service handleResponse after fromMapRenderingJob mapProject: " + JSON.stringify(mapProject, null, 2));
+
 
                     // Now load the map project state (same as before)
                     this.loadMapProjectState(mapProject.id).pipe(
@@ -370,6 +372,7 @@ export class PrintmapsService {
     
             return this.http.post<MapRenderingJobDefinition>(endpointUrl, this.modifyPayload(this.toMapRenderingJob(mapProject)), REQUEST_OPTIONS)
                 .pipe(
+                    tap(() => Logger.info("printmaps.service createOrUpdateMapRenderingJob fromMapRenderingJob ..." )),
                     map(mapRenderingJob => this.fromMapRenderingJob(mapProject.name, mapRenderingJob)),
                     tap(savedMapProject =>
                         this.toUserFiles(mapProject).forEach(userFile =>
@@ -514,7 +517,7 @@ export class PrintmapsService {
 
     private fromMapRenderingJob(name: string, mapRenderingJob: MapRenderingJobDefinition): MapProject {
         
-        Logger.info(">>> fromMapRenderingJob mapRenderingJob: " + JSON.stringify(mapRenderingJob, null, 2));
+        Logger.debug(">>> printmaps.service in function fromMapRenderingJob mapRenderingJob: " + JSON.stringify(mapRenderingJob, null, 2));
         
         let data = mapRenderingJob.Data;
         let attributes = data.Attributes;

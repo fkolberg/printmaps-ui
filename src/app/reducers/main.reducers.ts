@@ -60,6 +60,15 @@ const reducer = createReducer(initialState,
             };
         }),
 
+        /*
+            When an updateZoomLevel action is dispatched 
+            (from somewhere in the app, like the zoomend handler), 
+            this reducer:
+                Logs the zoomLevel and the current map project's ID.
+                Returns a new state, updating only the zoomLevel inside currentMapProject.
+            This keeps your zoom level stored in NgRx, 
+            making it available across components (and possibly persisted, too).
+        */
         on(UiActions.updateZoomLevel, (state, { zoomLevel }) => {
             const id = state.currentMapProject?.id;
             Logger.info(`>>> reducer zoomLevel: ${zoomLevel}, map id: ${id}`);
