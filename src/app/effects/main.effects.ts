@@ -208,7 +208,7 @@ export class MainEffects {
           this.actions.pipe(
             ofType(UiActions.setZoomLevel),
             tap(({ zoomLevel }) => {
-              Logger.info("UiActions.setZoomLevel effect zoomLevel: " + zoomLevel);
+              Logger.debug("UiActions.setZoomLevel effect zoomLevel: " + zoomLevel);
               //this.printmapsService.setZoom(zoomLevel);
               this.mapService.setZoom(zoomLevel);
             })

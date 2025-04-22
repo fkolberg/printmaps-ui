@@ -99,6 +99,12 @@ Normally the Printmaps should now be opened in your web browser.
 
 # Change Log
 
+## Version 1.0.3
+
+* Versionsnummern egalisiert: pom.xml, package.json und zusätzlich in app.component.html
+* zoomLevel wird getrackt, im store und in Datei ui.id abgelegt, je Projekt
+* autoselect last project in map-project-list-pane
+
 ## Version 1.0.2
 
 * smooth 

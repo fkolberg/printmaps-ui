@@ -1,7 +1,7 @@
 import {Component} from "@angular/core";
 import {Store} from "@ngrx/store";
 import {mapProjectReferences, selectedMapProjectReference} from "../../model/intern/printmaps-ui-state";
-import {distinctUntilChanged, filter} from "rxjs/operators";
+import {distinctUntilChanged, filter, take} from "rxjs/operators";
 import {cloneDeep, isEqual} from "lodash";
 import {MapProjectReference} from "../../model/intern/map-project-reference";
 import * as UiActions from "../../actions/main.actions";
@@ -58,6 +58,25 @@ export class MapProjectListPaneComponent {
                     .afterClosed()
                     .subscribe(() =>
                         this.store.dispatch(UiActions.deleteMapProject({id: nextSelectedMapProjectReference.id}))));
+        if (true) {
+            /*
+                If you really want to do this after constructor logic 
+                — and only once, when the map projects are first loaded — 
+                you can use an RxJS operator like filter and take(1) to wait for that:
+                Wait for first valid list, then auto-select last
+            */
+            this.store
+                .select(mapProjectReferences)
+                .pipe(
+                    filter(list => !!list && list.length > 0), // wait for non-empty list
+                    take(1) // only once
+                )
+                .subscribe(mapProjects => {
+                    const last = mapProjects[mapProjects.length - 1];
+                    this.selectedMapProjectReference = last;
+                    this.selectedMapProjectReference$.next(last);
+                });
+        }
     }
 
     updateSelectedMapProjectReference(selectedMapProjectReferenceIds: string) {

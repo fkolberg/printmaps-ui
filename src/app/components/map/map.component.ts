@@ -108,7 +108,7 @@ export class MapComponent implements AfterViewInit {
   */
   ngAfterViewInit(): void {
 
-    Logger.info(`ngAfterViewInit`);
+    Logger.debug(`ngAfterViewInit`);
 
     let mapHandler = L.map("map", {
       zoom: this.zoomLevel ?? 12,  // pull from store, fallback if needed
@@ -134,7 +134,7 @@ export class MapComponent implements AfterViewInit {
       // Zoom Change Listener
       mapHandler.on("zoomend", () => {
         this.zoomLevel = mapHandler.getZoom();
-        Logger.info(`>>> Zoom level changed from ${this.lastZoomLevel} to: ${this.zoomLevel}`);
+        Logger.debug(`>>> Zoom level changed from ${this.lastZoomLevel} to: ${this.zoomLevel}`);
         // Pushes the new value to internal observers & event emitters.
         this.zoomLevel$.next(this.zoomLevel);
         this.zoomLevelChange.emit(this.zoomLevel);
@@ -154,7 +154,7 @@ export class MapComponent implements AfterViewInit {
     let areaSelectHandlerSubscriptions = [];    
     this.active$.subscribe((active) => {
       if (active) {
-        Logger.debug("Conditional Area Selection Tool active: " + active);
+        Logger.trace("Conditional Area Selection Tool active: " + active);
         if (!areaSelectHandler) {
           areaSelectHandler = L.areaSelect({ keepAspectRatio: true });
           areaSelectHandler.addTo(mapHandler);
@@ -164,7 +164,7 @@ export class MapComponent implements AfterViewInit {
           );
         }
       } else {
-        Logger.info("Conditional Area Selection Tool active: " + active);
+        Logger.trace("Conditional Area Selection Tool active: " + active);
         if (areaSelectHandler) {
           areaSelectHandler.remove();
         }
@@ -297,7 +297,7 @@ export class MapComponent implements AfterViewInit {
             // ✅ Restore zoom level from store or default to 12
             this.zoomLevel = nextCurrentMapProject.zoomLevel ?? 12;       
             // ✅ ADD THIS: Immediately push zoom level to the subject
-            Logger.info(`>>> [Store] pushing zoomLevel: ${this.zoomLevel}`);
+            Logger.debug(`>>> [Store] pushing zoomLevel: ${this.zoomLevel}`);
             this.zoomLevel$.next(this.zoomLevel);
             this.zoomLevelChange.emit(this.zoomLevel);
             */
@@ -305,7 +305,7 @@ export class MapComponent implements AfterViewInit {
             const newZoomLevel = nextCurrentMapProject.zoomLevel ?? 12;
 
           if (newZoomLevel !== this.lastZoomLevel) {
-            Logger.info(`>>> [Store] pushing zoomLevel: ${newZoomLevel}`);
+            Logger.debug(`>>> [Store] pushing zoomLevel: ${newZoomLevel}`);
             this.zoomLevel$.next(newZoomLevel);
             this.zoomLevelChange.emit(newZoomLevel);
             this.lastZoomLevel = newZoomLevel;
@@ -520,7 +520,7 @@ export class MapComponent implements AfterViewInit {
           let gpxTrackHandler = gpx.parse(additionalGpxElement.file.data);
           gpxTrackHandler.setStyle(() => style);
           gpxTrackHandler.addTo(this.mapHandler);
-          Logger.info(">>> !!! updateGpxTracks to display track add file.name: " + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
+          Logger.debug(">>> !!! updateGpxTracks to display track add file.name: " + additionalGpxElement.file.name + " , id: " + additionalGpxElement.id);
           this.gpxTrackHandlerByElementId.set(
             additionalGpxElement.id,
             gpxTrackHandler
@@ -555,7 +555,7 @@ export class MapComponent implements AfterViewInit {
   */
 
   private handleCenterCoordinatesUpdate(mapHandler: L.Map) {
-    Logger.info(">>> map.component in function handleCenterCoordinatesUpdate");
+    Logger.debug(">>> map.component in function handleCenterCoordinatesUpdate");
     let endSyncModelToMap = new Subject();
     let startSyncModelToMap = new Subject();
     this.syncModelToMap(mapHandler, startSyncModelToMap, endSyncModelToMap);
@@ -567,7 +567,7 @@ export class MapComponent implements AfterViewInit {
     startSyncModelToMap: Subject<any>,
     endSyncModelToMap: Subject<any>
   ) {
-    Logger.info(">>> syncModelToMap ...");
+    Logger.debug(">>> syncModelToMap ...");
     if (true) {
       // original
       startSyncModelToMap
@@ -656,7 +656,7 @@ export class MapComponent implements AfterViewInit {
           (and it’s different from the previous one), 
           the subscribe block is triggered with nextMapCenter as the new coordinates.
           Inside this block:
-            Logger.info(...) logs the new center coordinates to the console for debugging purposes.
+            Logger.debug(...) logs the new center coordinates to the console for debugging purposes.
             mapHandler.panTo(nextMapCenter, { animate: false, noMoveStart: true }):
             panTo(nextMapCenter) moves the map’s center to the new coordinates.
             { animate: false } disables animation when panning to the new coordinates.
@@ -664,7 +664,7 @@ export class MapComponent implements AfterViewInit {
              when panning (this can be useful to avoid triggering unnecessary events or reactions).
         */
         .subscribe((nextMapCenter) => {
-          Logger.info(
+          Logger.debug(
             `>>> Sync center to map: lat=${nextMapCenter.lat}, lng=${nextMapCenter.lng}`
           );
           mapHandler.panTo(nextMapCenter, { animate: false, noMoveStart: true });
@@ -678,7 +678,7 @@ export class MapComponent implements AfterViewInit {
                 //skip(1), // Skip initial emission
                 tap((val) => {
                   // Log the emitted zoom level to confirm it's being emitted
-                  Logger.info("*** zoomLevel$ emitted: ", val);
+                  Logger.debug("*** zoomLevel$ emitted: ", val);
                 }),
                 takeUntil(endSyncModelToMap),
                 distinctUntilChanged() // Only emit when the zoom level changes
@@ -690,7 +690,7 @@ export class MapComponent implements AfterViewInit {
             Logger.debug('Map handler available:', mapHandler);
 
             if (mapHandler) {
-              Logger.info(`>>> Sync zoom to map: ${nextZoomLevel}`);
+              Logger.debug(`>>> Sync zoom to map: ${nextZoomLevel}`);
               mapHandler.setZoom(nextZoomLevel, { animate: false });
             } else {
               Logger.error("Map handler is undefined or null");
@@ -712,7 +712,7 @@ export class MapComponent implements AfterViewInit {
           /*
           tap(() => {  
             const zoom = mapHandler.getZoom();
-            Logger.info(
+            Logger.debug(
               `*** syncModelToMap mapHandler.getZoom(): ${zoom}}`
             );
           }),
@@ -720,7 +720,7 @@ export class MapComponent implements AfterViewInit {
          /*
           tap(() => {  
             const center = mapHandler.getCenter();
-            Logger.info(
+            Logger.debug(
               `*** syncModelToMap mapHandler.getCenter(): ${center}}`
             );
           }),
@@ -742,16 +742,16 @@ export class MapComponent implements AfterViewInit {
           )
         )
         .subscribe(([nextMapCenter, zoomLevel]) => {
-          Logger.info(`>>> panTo() called with lat=${nextMapCenter.lat}, lng=${nextMapCenter.lng}`);
-          Logger.info(`>>> mapHandler.getZoom()=${mapHandler.getZoom()}`);
-          Logger.info(`>>> expected zoomLevel=${zoomLevel}`);
+          Logger.debug(`>>> panTo() called with lat=${nextMapCenter.lat}, lng=${nextMapCenter.lng}`);
+          Logger.debug(`>>> mapHandler.getZoom()=${mapHandler.getZoom()}`);
+          Logger.debug(`>>> expected zoomLevel=${zoomLevel}`);
     
           // Pan to the new center
           mapHandler.panTo(nextMapCenter, { noMoveStart: true });
     
           // Apply zoom if needed
           if (mapHandler.getZoom() !== zoomLevel) {
-            Logger.info(`>>> setting zoomLevel to ${zoomLevel}`);
+            Logger.debug(`>>> setting zoomLevel to ${zoomLevel}`);
             mapHandler.setZoom(zoomLevel);
           }
         });
@@ -772,7 +772,7 @@ export class MapComponent implements AfterViewInit {
     startSyncModelToMap: Subject<any>,
     endSyncModelToMap: Subject<any>
   ) {
-    Logger.info(">>> syncMapToModel ...");
+    Logger.debug(">>> syncMapToModel ...");
     if (false) {
       // original
       fromEvent(mapHandler, "movestart")
@@ -795,7 +795,7 @@ export class MapComponent implements AfterViewInit {
     } else {
       fromEvent(mapHandler, "movestart")
       .pipe(
-        tap(() => Logger.info("*** syncMapToModel mapHandler.getZoom(): " + mapHandler.getZoom())),
+        tap(() => Logger.debug("*** syncMapToModel mapHandler.getZoom(): " + mapHandler.getZoom())),
         tap(() => endSyncModelToMap.next()),
         switchMap(() =>
           fromEvent(mapHandler, "move").pipe(
@@ -979,7 +979,7 @@ export class MapComponent implements AfterViewInit {
       this.selectedArea$,
     ])
       .pipe(
-        //tap(() => Logger.info("syncModelToAreaSelect zoom " + mapHandler.getZoom())), // HACK !!!
+        //tap(() => Logger.debug("syncModelToAreaSelect zoom " + mapHandler.getZoom())), // HACK !!!
         filter(([active]) => !!active),
         map(
           ([_, leafletEvent, selectedAreaInM]) =>
