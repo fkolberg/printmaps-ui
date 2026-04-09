@@ -22,6 +22,7 @@ export class ConfigurationService {
         if (!this.load()) {
             throw new Error("Configuration not loaded yet.");
         }
+        // xgadkob console.log(this.configuration);
         return this.configuration;
     }
 

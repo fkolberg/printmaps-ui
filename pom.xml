@@ -169,6 +169,9 @@
                                 <argument>build</argument>
                             </arguments>
                             <workingDirectory>${project.basedir}</workingDirectory>
+                            <environmentVariables>
+                                <NODE_OPTIONS>--openssl-legacy-provider</NODE_OPTIONS>
+                            </environmentVariables>
                         </configuration>
                     </execution>
                 </executions>

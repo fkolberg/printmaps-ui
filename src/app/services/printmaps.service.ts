@@ -50,6 +50,8 @@ export class PrintmapsService {
     }
 
     private get baseUrl() {
+        // xgadkob 
+        console.log('printmapsApiBaseUri: ' + this.configurationService.appConf.printmapsApiBaseUri);
         return this.configurationService.appConf.printmapsApiBaseUri;
     }
 
