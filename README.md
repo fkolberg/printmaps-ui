@@ -1,7 +1,7 @@
 # Web UI for Printmaps Service
 
 This project aims to provide an intuitive Web UI for the printmaps service provided by Klaus Tockloth at
-[http://printmaps-osm.de]().
+[https://printmaps-osm.de]().
 
 ![Screenshot of Printmaps UI](./docs/screenshot.png)
 
@@ -89,15 +89,31 @@ The Printmaps UI can be deployed with the following steps to any web server:
 * Fully functional Angular 12 development environment (see https://angular.io/guide/setup-local)
 * Optionally, an IDE supporting Angular development (e.g. IntelliJ)
 
+* Optionally, Visual Studio Code supporting Angular development 
+  - Build: mvn clean install
+
 ## Getting Started
 
 1. Clone repository from GitHub
 1. Create a configuration file named `local/config.json` by copying the `conf/config.sample.json` provided.
 1. Run locally with `ng serve -o`
+1a. Run server locally with:
+  export NODE_OPTIONS=--openssl-legacy-provider
+  ng 
+  or one-liner:
+  NODE_OPTIONS=--openssl-legacy-provider ng serve
+1b. Run application in browser with:
+  http://localhost:4200/
 
 Normally the Printmaps should now be opened in your web browser.
 
 # Change Log
+
+## Version 1.0.4
+
+* Versionsnummern egalisiert: pom.xml, package.json und zusätzlich in app.component.html
+* private static moveCoordinate angepasst wg Typescript-Fehler
+* https://printmaps-osm.de statt http://printmaps-osm.de
 
 ## Version 1.0.3
 

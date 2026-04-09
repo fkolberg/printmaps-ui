@@ -848,6 +848,8 @@ export class MapComponent implements AfterViewInit {
     );
   }
 
+  /*
+  xgadkob 20260408
   private static moveCoordinate(
     origin: L.LatLng,
     distanceInM: number,
@@ -860,6 +862,22 @@ export class MapComponent implements AfterViewInit {
       azimuth,
       distanceInM
     );
+    return L.latLng(result.lat2, result.lon2);
+  }
+  */
+  private static moveCoordinate(
+    origin: L.LatLng,
+    distanceInM: number,
+    azimuth: number
+  ): L.LatLng {
+
+    const result = Geodesic.WGS84.Direct(
+      origin.lat,
+      origin.lng,
+      azimuth,
+      distanceInM
+    ) as unknown as { lat2: number; lon2: number };
+
     return L.latLng(result.lat2, result.lon2);
   }
 
@@ -1005,7 +1023,7 @@ export class MapComponent implements AfterViewInit {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors |' +
-        ' Rendering powered by <a href="http://printmaps-osm.de">printmaps-osm.de</a>',
+        ' Rendering powered by <a href="https://printmaps-osm.de">printmaps-osm.de</a>',
     }).addTo(mapHandler);
   }
 }

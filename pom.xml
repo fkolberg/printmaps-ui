@@ -4,7 +4,7 @@
 
     <groupId>ch.wellernet.printmaps</groupId>
     <artifactId>printmaps-ui</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
     
     <properties>

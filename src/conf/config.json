@@ -1,5 +1,5 @@
 {
-    "printmapsApiBaseUri": "http://printmaps-osm.de:8282/api/beta2/maps",
+    "printmapsApiBaseUri": "https://printmaps-osm.de:8282/api/beta2/maps",
     "defaultCoordinates": {
       "latitude": 47.06,
       "longitude": 8.3

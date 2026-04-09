@@ -342,7 +342,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="9cec715d16fca2942a8704ded2af8d14c6e1d91f" datatype="html">
-        <source>You are about to remove the attribution statement from your map project. Please confirm that you will to add it somewhere the attribution according to <x id="START_LINK" ctype="x-a" equiv-text="&lt;a href=&quot;http://printmaps-osm.de/de/nutzung.html&quot; target=&quot;_blank&quot;&gt;"/> http://printmaps-osm.de/de/nutzung.html<x id="CLOSE_LINK" ctype="x-a" equiv-text="&lt;/a&gt;"/> somewhere else on your final work to by compliant with the copyright law.</source>
+        <source>You are about to remove the attribution statement from your map project. Please confirm that you will to add it somewhere the attribution according to <x id="START_LINK" ctype="x-a" equiv-text="&lt;a href=&quot;https://printmaps-osm.de/de/nutzung.html&quot; target=&quot;_blank&quot;&gt;"/> https://printmaps-osm.de/de/nutzung.html<x id="CLOSE_LINK" ctype="x-a" equiv-text="&lt;/a&gt;"/> somewhere else on your final work to by compliant with the copyright law.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/components/current-map-project-pane/remove-attribution-confirm-dialog.component.html</context>
           <context context-type="linenumber">3,6</context>
