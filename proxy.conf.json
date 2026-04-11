@@ -1,6 +1,6 @@
 {
   "/api": {
-    "target": "http://printmaps-osm.de:8282",
+    "target": "https://gui2.printmaps-osm.de",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
