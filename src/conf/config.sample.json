@@ -1,5 +1,6 @@
 {
-  "printmapsApiBaseUri": "https://printmaps-osm.de:8282/api/beta2/maps",
+  "ppprintmapsApiBaseUri": "https://printmaps-osm.de:8282/api/beta2/maps",
+  "printmapsApiBaseUri": "https://gui2.printmaps-osm.de/api/beta2/maps",
   "printmapsWebUri": "https://printmaps.osm.de",
   "printmapsUsageUrl": "https://printmaps-osm.de/de/nutzung.html",
   
