@@ -20,6 +20,8 @@ import {AdditionalElementListComponent} from "../additional-element-list/additio
 import {MatDialog} from "@angular/material/dialog";
 import {order} from "../../utils/common.util";
 
+import { ConfigurationService } from "../../services/configuration.service";
+
 import {Logger, LogLevel} from "../../utils/logger.util";
 
 @Component({
@@ -233,4 +235,10 @@ export class CurrentMapProjectPaneComponent {
     styles: []
 })
 export class RemoveAttributionConfirmDialog {
+    // new in 1.0.4
+    usageUrl: string;
+
+    constructor(private configurationService: ConfigurationService) {
+        this.usageUrl = this.configurationService.appConf.printmapsUsageUrl;
+    }
 }
