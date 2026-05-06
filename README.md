@@ -114,6 +114,9 @@ Normally the Printmaps should now be opened in your web browser.
 * Versionsnummern egalisiert: pom.xml, package.json und zusätzlich in app.component.html
 * private static moveCoordinate angepasst wg Typescript-Fehler
 * https://printmaps-osm.de statt http://printmaps-osm.de
+* neue Komfigurations-Parameter:
+    "printmapsWebUri": "https://printmaps.osm.de",
+    "printmapsUsageUrl": "https://printmaps-osm.de/de/nutzung.html",
 
 ## Version 1.0.3
 i
