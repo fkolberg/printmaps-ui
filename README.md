@@ -99,7 +99,7 @@ The Printmaps UI can be deployed with the following steps to any web server:
 1. Run locally with `ng serve -o`
 1a. Run server locally with:
   export NODE_OPTIONS=--openssl-legacy-provider
-  ng 
+  ng serve (oder: npm start)
   or one-liner:
   NODE_OPTIONS=--openssl-legacy-provider ng serve
 1b. Run application in browser with:
@@ -116,7 +116,7 @@ Normally the Printmaps should now be opened in your web browser.
 * https://printmaps-osm.de statt http://printmaps-osm.de
 
 ## Version 1.0.3
-
+i
 * Versionsnummern egalisiert: pom.xml, package.json und zusätzlich in app.component.html
 * zoomLevel wird getrackt, im store und in Datei ui.id abgelegt, je Projekt
 * autoselect last project in map-project-list-pane

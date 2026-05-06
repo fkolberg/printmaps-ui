@@ -82,14 +82,14 @@
 │   ├── services
 │   │   ├── configuration.service.ts
 │   │   ├── gpx-data-map.service.ts
-│   │   ├── json-storage.service.ts
-│   │   ├── logging.service.ts
 │   │   ├── map-project-reference.service.ts
+│   │   ├── map.service.ts
 │   │   ├── printmaps.service.ts
 │   │   ├── scale.service.ts
 │   │   └── template-service.ts
 │   └── utils
 │       ├── common.util.ts
+│       ├── logger.util.ts
 │       └── message.util.ts
 ├── assets
 │   ├── actions
@@ -127,6 +127,7 @@
 │       ├── vertical-down.svg
 │       └── vertical-up.svg
 ├── conf
+│   ├── config.json
 │   └── config.sample.json
 ├── environments
 │   ├── environment.prod.ts
@@ -140,6 +141,7 @@
 ├── local
 │   └── config.json
 ├── main.ts
+├── marker-shadow.png
 ├── original-assests
 │   └── printmaps-ui.svg
 ├── polyfills.ts
@@ -150,4 +152,4 @@
 ├── tsconfig.spec.json
 └── typings.d.ts
 
-37 directories, 113 files
+37 directories, 115 files

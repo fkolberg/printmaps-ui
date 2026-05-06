@@ -1,0 +1,23 @@
+insgesamt 884
+-rw-rw-r--   1 franz franz   4792 Apr  9 19:20 angular.json
+-rw-rw-r--   1 franz franz    721 Feb 19  2025 assembly.xml
+-rw-rw-r--   1 franz franz    126 Feb 19  2025 browserslist
+-rw-rw-r--   1 franz franz   1120 Mär 25  2025 dir.txt
+drwxrwxr-x   2 franz franz   4096 Feb 19  2025 docs
+-rw-rw-r--   1 franz franz    579 Feb 19  2025 karma.conf.ci.js
+-rw-rw-r--   1 franz franz   1276 Feb 19  2025 karma.conf.js
+-rw-rw-r--   1 franz franz  11342 Feb 19  2025 LICENSE
+-rw-rw-r--   1 franz franz      0 Mai  5 11:36 ls.txt
+drwxrwxr-x   3 franz franz   4096 Feb 19  2025 node
+drwxrwxr-x 903 franz franz  32768 Apr  9 18:45 node_modules
+-rw-rw-r--   1 franz franz   2681 Apr  8 17:12 package.json
+-rw-rw-r--   1 franz franz 759968 Apr  9 18:44 package-lock.json
+-rw-rw-r--   1 franz franz   4375 Apr 14  2025 pom_original.xml
+-rw-rw-r--   1 franz franz   8231 Apr  9 16:01 pom.xml
+-rw-rw-r--   1 franz franz    125 Apr 11 09:41 printmaps-ui.code-workspace
+-rw-rw-r--   1 franz franz    137 Apr 10 15:07 proxy.conf.json
+-rw-rw-r--   1 franz franz   4853 Apr 21 09:12 README.md
+drwxrwxr-x   9 franz franz   4096 Mai  5 11:01 src
+drwxrwxr-x   4 franz franz   4096 Apr  9 18:46 target
+-rw-rw-r--   1 franz franz    355 Feb 19  2025 tsconfig.json
+-rw-rw-r--   1 franz franz   2909 Feb 19  2025 tslint.json

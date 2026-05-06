@@ -120,7 +120,10 @@ export class MapComponent implements AfterViewInit {
     */
     this.mapService.setMap(mapHandler);
     
+    /*
     MapComponent.addOsmLayer(mapHandler);
+    */
+    this.addOsmLayer(mapHandler);
 
     // Track zoom level
     if (true) {
@@ -1019,11 +1022,45 @@ export class MapComponent implements AfterViewInit {
       );
   }
 
-  private static addOsmLayer(mapHandler: L.Map) {
+  /*
+  private static aaaddOsmLayer(mapHandler: L.Map) {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors |' +
         ' Rendering powered by <a href="https://printmaps-osm.de">printmaps-osm.de</a>',
+    }).addTo(mapHandler);
+  }
+  */
+  /*
+  private addOsmLayer(mapHandler: L.Map) {
+    const webUrl = this.configurationService.appConf.printmapsWebUri;
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | ' +
+        `Rendering powered by <a href="${webUrl}" target="_blank">${webUrl}</a>`,
+    }).addTo(mapHandler);
+  }
+  */
+  private addOsmLayer(mapHandler: L.Map) {
+    const webUrl = this.configurationService.appConf.printmapsWebUri;
+
+    let displayText = webUrl;
+
+    try {
+      const url = new URL(webUrl);
+
+      // remove protocol and optionally normalize hostname
+      displayText = url.hostname.replace("printmaps.osm.de", "printmaps-osm.de");
+    } catch {
+      // fallback if URL parsing fails
+      displayText = "printmaps-osm.de";
+    }
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | ' +
+        `Rendering powered by <a href="${webUrl}" target="_blank">${displayText}</a>`,
     }).addTo(mapHandler);
   }
 }
