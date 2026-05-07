@@ -265,13 +265,23 @@
           <context context-type="linenumber">3,6</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="1937d7eb913088e4ab298037210962a1262fecbe" datatype="html">
-        <source> You are about to remove the attribution statement from your map project. Please confirm that you will add it somewhere according to <x id="START_LINK" ctype="x-a" equiv-text="&lt;a [href]=&quot;usageUrl&quot; target=&quot;_blank&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ usageUrl }}"/><x id="CLOSE_LINK" ctype="x-a" equiv-text="&lt;/a&gt;"/> somewhere else on your final work to be compliant with the copyright law. </source>
+
+      <trans-unit datatype="html" approved="yes" id="removeAttributionText">
+        <source>You are about to remove the attribution statement from your map project. Please confirm that you will to add it somewhere the attribution according to <x ctype="x-a" equiv-text="&lt;a href=&quot;https://printmaps-osm.de/de/nutzung.html&quot; target=&quot;_blank&quot;>" id="START_LINK"/> https://printmaps-osm.de/de/nutzung.html<x ctype="x-a" equiv-text="&lt;/a>" id="CLOSE_LINK"/> somewhere else on your final work to by compliant with the copyright law.</source>
+
+        <target state="signed-off" phase-name="approval-1">
+          Sie sind dabei, den Urheberhinweis aus Ihrem Kartenprojekt zu entfernen.
+          Bitte bestätigen Sie, dass Sie ihn an anderer Stelle gemäß
+          <x id="START_LINK"/><x id="INTERPOLATION"/><x id="CLOSE_LINK"/>
+          in Ihrem endgültigen Werk wieder anbringen, sodass kein Verstoß gegen das Urheberrecht entsteht.
+        </target>
+
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/components/current-map-project-pane/remove-attribution-confirm-dialog.component.html</context>
-          <context context-type="linenumber">9,14</context>
+          <context context-type="linenumber">3,6</context>
         </context-group>
       </trans-unit>
+      
       <trans-unit datatype="html" approved="yes" id="d7b35c384aecd25a516200d6921836374613dfe7">
         <source>Cancel</source>
         <target state="signed-off" phase-name="approval-1">Abbruch</target>
