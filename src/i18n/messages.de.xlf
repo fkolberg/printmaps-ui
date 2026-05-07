@@ -267,7 +267,7 @@
       </trans-unit>
 
       <trans-unit datatype="html" approved="yes" id="removeAttributionText">
-        <source>You are about to remove the attribution statement from your map project. Please confirm that you will to add it somewhere the attribution according to <x ctype="x-a" equiv-text="&lt;a href=&quot;https://printmaps-osm.de/de/nutzung.html&quot; target=&quot;_blank&quot;>" id="START_LINK"/> https://printmaps-osm.de/de/nutzung.html<x ctype="x-a" equiv-text="&lt;/a>" id="CLOSE_LINK"/> somewhere else on your final work to by compliant with the copyright law.</source>
+        <source>blabla removeAttributionText</source>
 
         <target state="signed-off" phase-name="approval-1">
           Sie sind dabei, den Urheberhinweis aus Ihrem Kartenprojekt zu entfernen.

@@ -348,13 +348,25 @@
           <context context-type="linenumber">3,6</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="1937d7eb913088e4ab298037210962a1262fecbe" datatype="html">
-        <source> You are about to remove the attribution statement from your map project. Please confirm that you will add it somewhere according to <x id="START_LINK" ctype="x-a" equiv-text="&lt;a [href]=&quot;usageUrl&quot; target=&quot;_blank&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ usageUrl }}"/><x id="CLOSE_LINK" ctype="x-a" equiv-text="&lt;/a&gt;"/> somewhere else on your final work to be compliant with the copyright law. </source>
+
+      <trans-unit id="removeAttributionText" datatype="html">
+        <source>
+          You are about to remove the attribution statement from your map project.
+          Please confirm that you will to add it somewhere the attribution according to
+          <x id="START_LINK" ctype="x-a" equiv-text="&lt;a [href]=&quot;usageUrl&quot; target=&quot;_blank&quot;&gt;"/>
+          <x id="INTERPOLATION" equiv-text="{{ usageUrl }}"/>
+          <x id="CLOSE_LINK" ctype="x-a" equiv-text="&lt;/a&gt;"/>
+          somewhere else on your final work to be compliant with the copyright law.
+        </source>
+
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/components/current-map-project-pane/remove-attribution-confirm-dialog.component.html</context>
-          <context context-type="linenumber">9,14</context>
+          <context context-type="sourcefile">
+            src/app/components/current-map-project-pane/remove-attribution-confirm-dialog.component.html
+          </context>
+          <context context-type="linenumber">3,6</context>
         </context-group>
       </trans-unit>
+      
       <trans-unit id="d7b35c384aecd25a516200d6921836374613dfe7" datatype="html">
         <source>Cancel</source>
         <context-group purpose="location">

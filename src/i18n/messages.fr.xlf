@@ -268,7 +268,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="removeAttributionText" datatype="html">
-        <source>You are about to remove the attribution statement from your map project. Please confirm that you will add it somewhere according to <x id="START_LINK" ctype="x-a" equiv-text="&lt;a [href]=&quot;usageUrl&quot; target=&quot;_blank&quot;&gt;"/><x id="INTERPOLATION" equiv-text="{{ usageUrl }}"/><x id="CLOSE_LINK" ctype="x-a" equiv-text="&lt;/a&gt;"/> somewhere else on your final work to be compliant with the copyright law. </source>
+        <source>blabla removeAttributionText</source>
         <target>
         Vous êtes sur le point de supprimer la mention d'attribution de votre projet de carte.
         Veuillez confirmer que vous allez l’ajouter ailleurs conformément à
