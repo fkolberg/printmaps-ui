@@ -98,7 +98,7 @@ The Printmaps UI can be deployed with the following steps to any web server:
 1. Create a configuration file named `local/config.json` by copying the `conf/config.sample.json` provided.
 1. Run locally with `ng serve -o`
 1a. Run in development server (Visual Studio Code) locally with:
-  export NODE_OPTIONS=--openssl-legacy-provider
+  export NODE_OPTIONS=--openssl-legacy-provider (obsolet !)
   npm start (oder npx ng serve --open) (oder ng serve)
   npx ng serve --configuration=fr
   or one-liner:
