@@ -1,12 +1,11 @@
 {
-    "ppprintmapsApiBaseUri": "http://printmaps-osm.de:8282/api/beta2/maps",
-    "printmapsApiBaseUri": "https://gui2.printmaps-osm.de/api/beta2/maps",
-    "printmapsWebUri": "https://printmaps.osm.de",
+    "printmapsApiBaseUri": "https://gui1.printmaps-osm.de/api/beta2/maps",
+    "printmapsWebUri": "https://printmaps-osm.de",
     "printmapsUsageUrl": "https://printmaps-osm.de/de/nutzung.html",
     
     "defaultCoordinates": {
-      "latitude": 47.06,
-      "longitude": 8.3
+      "latitude": 51.9,
+      "longitude": 7.6
     },
     "autoUploadIntervalInSeconds": 5,
     "mapStatePollingIntervalInSeconds": 1
